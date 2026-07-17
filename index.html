@@ -491,15 +491,7 @@
             <button class="btn btn-primary" onclick="alterarSenha()" style="margin-top:4px;">Salvar Senha</button>
             <div id="cfg-msg" style="margin-top:10px;font-size:13px;"></div>
           </div>
-          <hr style="border-color:var(--border);" />
-          <div style="padding:20px;">
-            <h3 style="font-size:15px;font-weight:600;margin-bottom:6px;">Supabase</h3>
-            <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Atualize a URL e a chave pública do seu projeto Supabase.</p>
-            <div class="field"><label>Supabase URL</label><input type="text" id="cfg-sb-url" placeholder="https://xxx.supabase.co" /></div>
-            <div class="field"><label>Anon Key</label><input type="text" id="cfg-sb-key" placeholder="eyJ..." /></div>
-            <button class="btn btn-primary" onclick="salvarSupabaseConfig()">Salvar e Reconectar</button>
-            <div id="cfg-sb-msg" style="margin-top:10px;font-size:13px;"></div>
-          </div>
+
         </div>
       </div>
 
@@ -659,8 +651,8 @@
 // ─────────────────────────────────────────────
 //  CONFIG — preencha com seus dados do Supabase
 // ─────────────────────────────────────────────
-const DEFAULT_SB_URL = 'SUPABASE_URL_AQUI';
-const DEFAULT_SB_KEY = 'SUPABASE_ANON_KEY_AQUI';
+const DEFAULT_SB_URL = 'https://vcgvupyxxmtftookryli.supabase.co';
+const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjZ3Z1cHl4eG10ZnRvb2tyeWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyNzU2MzAsImV4cCI6MjA5OTg1MTYzMH0.7duYp3Rxqd3phyC_MTUkXCiWUx22wpeuckFtAnYypWQ';
 
 const ADMIN_USER = 'admin';
 
@@ -698,13 +690,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('rel-mes').value = now.getMonth();
 
   // conectar supabase
-  const ok = initSupabase();
+  initSupabase();
   await new Promise(r => setTimeout(r, 900));
   document.getElementById('app-loading').style.display = 'none';
 
   const logged = sessionStorage.getItem('arr_logged');
   if (logged) {
-    showApp(ok);
+    showApp();
   } else {
     showLogin();
   }
@@ -714,22 +706,10 @@ function showLogin() {
   document.getElementById('login-screen').style.display = 'flex';
 }
 
-function showApp(sbOk) {
+function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
-  if (sbOk) {
-    loadAll();
-    fillCfgFields();
-  } else {
-    navigate('configuracoes');
-    showToast('⚠️ Configure o Supabase para começar');
-  }
-}
-
-function fillCfgFields() {
-  const { url, key } = getSbConfig();
-  document.getElementById('cfg-sb-url').value = url !== 'SUPABASE_URL_AQUI' ? url : '';
-  document.getElementById('cfg-sb-key').value = key !== 'SUPABASE_ANON_KEY_AQUI' ? key : '';
+  loadAll();
 }
 
 // ─── LOGIN ───────────────────────────────────
@@ -740,7 +720,7 @@ function doLogin() {
   if (u === ADMIN_USER && p === adminPass) {
     errEl.style.display = 'none';
     sessionStorage.setItem('arr_logged', '1');
-    showApp(initSupabase());
+    showApp();
   } else {
     errEl.style.display = 'block';
   }
@@ -1233,23 +1213,6 @@ function alterarSenha() {
   document.getElementById('cfg-conf-senha').value = '';
 }
 
-function salvarSupabaseConfig() {
-  const url = document.getElementById('cfg-sb-url').value.trim();
-  const key = document.getElementById('cfg-sb-key').value.trim();
-  const msgEl = document.getElementById('cfg-sb-msg');
-  if (!url || !key) { msgEl.textContent = '❌ Preencha URL e Key.'; msgEl.style.color = 'var(--red)'; return; }
-  localStorage.setItem('arr_sb_url', url);
-  localStorage.setItem('arr_sb_key', key);
-  const ok = initSupabase();
-  if (ok) {
-    msgEl.textContent = '✅ Conectado! Recarregando…';
-    msgEl.style.color = 'var(--green)';
-    setTimeout(() => { loadAll(); navigate('dashboard'); }, 1200);
-  } else {
-    msgEl.textContent = '❌ Falha ao conectar. Verifique as credenciais.';
-    msgEl.style.color = 'var(--red)';
-  }
-}
 
 // ─── CONFIRM DELETE ──────────────────────────
 let _delCallback = null;
