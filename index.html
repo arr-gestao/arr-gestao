@@ -49,12 +49,12 @@
 
     /* APP SHELL */
     #app{display:none;height:100vh;flex-direction:column;}
-    .topbar{background:var(--navy);color:white;padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.15);z-index:100;}
+    .topbar{background:var(--navy);color:white;padding:0 14px;height:56px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.15);z-index:100;}
     .topbar-logo{display:flex;align-items:center;gap:10px;}
-    .topbar-logo-text h2{font-size:16px;font-weight:700;color:white;}
+    .topbar-logo-text h2{font-size:15px;font-weight:700;color:white;}
     .topbar-logo-text p{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);}
     .topbar-right{display:flex;align-items:center;gap:10px;}
-    .topbar-user{font-size:12px;color:rgba(255,255,255,.6);padding:4px 10px;background:rgba(255,255,255,.08);border-radius:6px;}
+    .topbar-user{font-size:11px;color:rgba(255,255,255,.6);padding:4px 8px;background:rgba(255,255,255,.08);border-radius:6px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
     .btn-logout{padding:7px 14px;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;color:rgba(255,255,255,.8);font-size:12px;font-weight:500;transition:all .2s;}
     .btn-logout:hover{border-color:white;color:white;}
 
@@ -163,12 +163,16 @@
     .month-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;}
     .month-chip.active{background:var(--orange);color:white;border-color:var(--orange);}
     .progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:6px;}
+    .presenca-toggle{display:flex;gap:0;border-radius:9px;overflow:hidden;border:1.5px solid var(--border);width:100%;}
+    .presenca-btn{flex:1;padding:10px 8px;font-size:13px;font-weight:600;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg);color:var(--muted);border:none;font-family:inherit;}
+    .presenca-btn.presente.active{background:#dcfce7;color:#16a34a;}
+    .presenca-btn.ausente.active{background:#fef2f2;color:var(--red);}
     .progress-fill{height:100%;background:var(--orange);border-radius:3px;transition:width .4s;}
     .section{display:none;}
     .section.active{display:block;}
 
     /* FILTRO USUÁRIO (admin) */
-    .user-filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);}
+    .user-filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);}
     .user-filter-bar label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;}
     .user-filter-bar select{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:var(--bg);}
     .user-filter-bar select:focus{border-color:var(--orange);}
@@ -181,11 +185,11 @@
     @media(max-width:768px){
       .sidebar{display:none;}
       .mobile-nav{display:block;}
-      .main{padding:14px;}
+      .main{padding:12px 10px;}
       .page-header h1{font-size:18px;}
       .stats-grid{grid-template-columns:1fr 1fr;gap:10px;}
       .stat-card{padding:14px 12px;}
-      .stat-card .stat-value{font-size:20px;}
+      .stat-card .stat-value{font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
       th,td{padding:10px 12px;}
       .hide-mobile{display:none !important;}
       .table-toolbar{padding:10px 12px;}
@@ -298,6 +302,7 @@
           <div class="stat-card"><div class="stat-label">Obras</div><div class="stat-value" id="stat-obras">–</div><div class="stat-sub">em andamento</div></div>
           <div class="stat-card accent"><div class="stat-label">Diárias este mês</div><div class="stat-value" id="stat-diarias-mes">–</div><div class="stat-sub" id="stat-diarias-mes-label">–</div></div>
           <div class="stat-card"><div class="stat-label">Total a pagar</div><div class="stat-value" id="stat-total">–</div><div class="stat-sub">este mês</div></div>
+          <div class="stat-card" style="border-color:#fef2f2;"><div class="stat-label">Faltas</div><div class="stat-value" id="stat-faltas" style="color:var(--red);">–</div><div class="stat-sub">este mês</div></div>
         </div>
         <div class="table-wrap">
           <div class="table-toolbar" style="padding:14px 16px 10px;"><strong style="font-size:14px;">Últimas Diárias</strong></div>
@@ -364,7 +369,7 @@
             <span id="diaria-total-label" style="font-size:13px;font-weight:600;color:var(--orange2);"></span>
           </div>
           <table class="hide-mobile">
-            <thead><tr><th>Data</th><th>Colaborador</th><th>Obra</th><th class="admin-only">Lançado por</th><th>Valor</th><th>Status</th><th>Ação</th></tr></thead>
+            <thead><tr><th>Data</th><th>Colaborador</th><th>Obra</th><th class="admin-only">Lançado por</th><th>Presença</th><th>Valor</th><th>Pagamento</th><th>Ação</th></tr></thead>
             <tbody id="diaria-tbody"></tbody>
           </table>
           <div class="show-mobile-only" id="diaria-cards" style="padding:10px;"></div>
@@ -536,10 +541,18 @@
         <div class="field"><label>Data *</label><input type="date" id="diaria-data"/></div>
         <div class="field"><label>Valor (R$) *</label><input type="number" id="diaria-valor" placeholder="0,00" step="0.01" min="0"/></div>
       </div>
-      <div class="field"><label>Status Pagamento</label>
+      <div class="field">
+        <label>Presença</label>
+        <div class="presenca-toggle">
+          <button type="button" class="presenca-btn presente active" id="btn-presente" onclick="setPresenca('presente')">✅ Presente</button>
+          <button type="button" class="presenca-btn ausente" id="btn-ausente" onclick="setPresenca('ausente')">❌ Ausente</button>
+        </div>
+      </div>
+      <div class="field" id="field-pago-wrap">
+        <label>Status Pagamento</label>
         <select id="diaria-pago"><option value="pendente">Pendente</option><option value="pago">Pago</option></select>
       </div>
-      <div class="field"><label>Observações</label><input type="text" id="diaria-obs" placeholder="Ajuste, serviço extra, etc."/></div>
+      <div class="field"><label>Observações</label><input type="text" id="diaria-obs" placeholder="Ajuste, serviço extra, motivo de falta, etc."/></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-diaria')">Cancelar</button>
@@ -736,6 +749,8 @@ function renderDashboard() {
   const obrasAtivas  = obras.filter(o => o.status === 'em_andamento').length;
   const totalMes = diariasMes.reduce((s, d) => s + parseFloat(d.valor || 0), 0);
 
+  const faltasMes = diariasMes.filter(d => d.presenca === 'ausente').length;
+  document.getElementById('stat-faltas').textContent = faltasMes;
   document.getElementById('stat-colab').textContent = colabsAtivos;
   document.getElementById('stat-obras').textContent = obrasAtivas;
   document.getElementById('stat-diarias-mes').textContent = diariasMes.length;
@@ -750,29 +765,51 @@ function renderDashboard() {
     container.innerHTML = '<div class="empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>Nenhuma diária registrada ainda</p></div>';
     return;
   }
-  container.innerHTML = `<table style="width:100%;border-collapse:collapse;">
-    <thead><tr>
-      <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Data</th>
-      <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Colaborador</th>
-      <th class="hide-mobile" style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Obra</th>
-      ${isAdmin ? '<th class="hide-mobile" style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Por</th>' : ''}
-      <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Valor</th>
-      <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Status</th>
-    </tr></thead><tbody>` +
-    ultimas.map(d => {
-      const c = colabs.find(x => x.id === d.colaborador_id);
-      const o = obras.find(x => x.id === d.obra_id);
-      const u = usuarios.find(x => x.id === d.usuario_id);
-      const dt = new Date(d.data + 'T00:00:00');
-      return `<tr>
-        <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);">${dt.toLocaleDateString('pt-BR')}</td>
-        <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);font-weight:500;">${c ? c.nome : '–'}</td>
-        <td class="hide-mobile" style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);">${o ? o.nome : '–'}</td>
-        ${isAdmin ? `<td class="hide-mobile" style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);"><span class="badge badge-purple">${u ? u.nome.split(' ')[0] : '–'}</span></td>` : ''}
-        <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);font-weight:600;color:var(--orange2);">R$ ${parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="padding:12px 16px;border-bottom:1px solid var(--border);">${d.pago === 'pago' ? '<span class="badge badge-green">Pago</span>' : '<span class="badge badge-yellow">Pendente</span>'}</td>
-      </tr>`;
-    }).join('') + '</tbody></table>';
+  const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const desktopRows = ultimas.map(d => {
+    const c = colabs.find(x => x.id === d.colaborador_id);
+    const o = obras.find(x => x.id === d.obra_id);
+    const u = usuarios.find(x => x.id === d.usuario_id);
+    const dt = new Date(d.data + 'T00:00:00');
+    return `<tr>
+      <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);">${dt.toLocaleDateString('pt-BR')}</td>
+      <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);font-weight:500;">${c ? c.nome : '–'}</td>
+      <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);">${o ? o.nome : '–'}</td>
+      ${isAdmin ? `<td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);"><span class="badge badge-purple">${u ? u.nome.split(' ')[0] : '–'}</span></td>` : ''}
+      <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);font-weight:600;color:var(--orange2);">R$ ${parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      <td style="padding:12px 16px;border-bottom:1px solid var(--border);">${d.pago === 'pago' ? '<span class="badge badge-green">Pago</span>' : '<span class="badge badge-yellow">Pendente</span>'}</td>
+    </tr>`;
+  }).join('');
+  const mobileCards = ultimas.map(d => {
+    const c = colabs.find(x => x.id === d.colaborador_id);
+    const o = obras.find(x => x.id === d.obra_id);
+    const u = usuarios.find(x => x.id === d.usuario_id);
+    const dt = new Date(d.data + 'T00:00:00');
+    return `<div class="diaria-item">
+      <div class="diaria-date">${dt.getDate()} <small>${MESES_PT[dt.getMonth()]}</small></div>
+      <div class="diaria-info">
+        <h4>${c ? c.nome : '–'}</h4>
+        <p>${o ? o.nome : '–'}${isAdmin && u ? ' · <span style="color:var(--orange2);">'+u.nome.split(' ')[0]+'</span>' : ''}</p>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--orange2);">R$ ${parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        <div style="margin-top:4px;">${d.pago === 'pago' ? '<span class="badge badge-green">Pago</span>' : '<span class="badge badge-yellow">Pendente</span>'}</div>
+      </div>
+    </div>`;
+  }).join('');
+  container.innerHTML = `
+    <table class="hide-mobile" style="width:100%;border-collapse:collapse;">
+      <thead><tr>
+        <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Data</th>
+        <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Colaborador</th>
+        <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Obra</th>
+        ${isAdmin ? '<th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Por</th>' : ''}
+        <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Valor</th>
+        <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Status</th>
+      </tr></thead>
+      <tbody>${desktopRows}</tbody>
+    </table>
+    <div class="show-mobile-only" style="padding:10px;">${mobileCards}</div>`;
 }
 
 // ─── OBRAS ───────────────────────────────────
@@ -923,15 +960,17 @@ function renderDiarias(list) {
     const o=obras.find(x=>x.id===d.obra_id);
     const u=usuarios.find(x=>x.id===d.usuario_id);
     const dt=new Date(d.data+'T00:00:00');
-    return `<tr>
+    const ausente = d.presenca === 'ausente';
+    return `<tr style="${ausente?'background:#fff8f8;':''}">
       <td>${dt.toLocaleDateString('pt-BR')}</td>
       <td style="font-weight:500;">${c?c.nome:'–'}</td>
       <td class="hide-mobile">${o?o.nome:'–'}</td>
       ${isAdmin?`<td class="hide-mobile"><span class="badge badge-purple">${u?u.nome.split(' ')[0]:'–'}</span></td>`:''}
-      <td style="font-weight:600;color:var(--orange2);">R$ ${parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-      <td>${d.pago==='pago'?'<span class="badge badge-green">Pago</span>':'<span class="badge badge-yellow">Pendente</span>'}</td>
+      <td>${ausente?'<span class="badge badge-red">❌ Ausente</span>':'<span class="badge badge-green">✅ Presente</span>'}</td>
+      <td style="font-weight:600;color:${ausente?'var(--muted)':'var(--orange2)'};">${ausente?'–':'R$ '+parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      <td>${d.pago==='pago'?'<span class="badge badge-green">Pago</span>':ausente?'<span class="badge badge-gray">N/A</span>':'<span class="badge badge-yellow">Pendente</span>'}</td>
       <td>
-        ${d.pago!=='pago'?`<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="marcarPago(${d.id})">✔ Pagar</button>`:''}
+        ${!ausente && d.pago!=='pago'?`<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="marcarPago(${d.id})">✔ Pagar</button>`:''}
         <button class="btn btn-danger" style="padding:4px 10px;font-size:11px;margin-left:4px;" onclick="confirmDelete('diaria',${d.id},'diária de ${esc(c?c.nome:'')}')">✕</button>
       </td>
     </tr>`;
@@ -941,12 +980,17 @@ function renderDiarias(list) {
     const c=colabs.find(x=>x.id===d.colaborador_id);
     const o=obras.find(x=>x.id===d.obra_id);
     const dt=new Date(d.data+'T00:00:00');
-    return `<div class="diaria-item">
-      <div class="diaria-date">${dt.getDate()} <small>${MESES_PT[dt.getMonth()]}</small></div>
-      <div class="diaria-info"><h4>${c?c.nome:'–'}</h4><p>${o?o.nome:'–'}</p></div>
-      <div style="text-align:right;">
-        <div style="font-size:14px;font-weight:700;color:var(--orange2);">R$ ${parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-        ${d.pago!=='pago'?`<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;margin-top:4px;" onclick="marcarPago(${d.id})">Pagar</button>`:'<span class="badge badge-green" style="margin-top:4px;">Pago</span>'}
+    const ausente2 = d.presenca === 'ausente';
+    return `<div class="diaria-item" style="${ausente2?'background:#fff8f8;border-color:#fecaca;':''}">
+      <div class="diaria-date" style="${ausente2?'background:#fef2f2;':''}">${dt.getDate()} <small>${MESES_PT[dt.getMonth()]}</small></div>
+      <div class="diaria-info">
+        <h4>${c?c.nome:'–'}</h4>
+        <p>${o?o.nome:'–'}</p>
+        ${ausente2?'<span class="badge badge-red" style="margin-top:3px;">❌ Falta</span>':'<span class="badge badge-green" style="margin-top:3px;">✅ Presente</span>'}
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:14px;font-weight:700;color:${ausente2?'var(--muted)':'var(--orange2)'};">${ausente2?'Falta':'R$ '+parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        ${!ausente2 && d.pago!=='pago'?`<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;margin-top:4px;" onclick="marcarPago(${d.id})">Pagar</button>`:!ausente2?'<span class="badge badge-green" style="margin-top:4px;">Pago</span>':''}
       </div>
     </div>`;
   }).join('') : '<div class="empty"><p>Nenhuma diária</p></div>';
@@ -962,8 +1006,24 @@ function filterDiarias(q) {
   }));
 }
 
+function setPresenca(val) {
+  document.getElementById('btn-presente').classList.toggle('active', val === 'presente');
+  document.getElementById('btn-ausente').classList.toggle('active', val === 'ausente');
+  const fieldPago = document.getElementById('field-pago-wrap');
+  const fieldValor = document.querySelector('#diaria-valor').closest('.field');
+  if (val === 'ausente') {
+    document.getElementById('diaria-valor').value = '0';
+    if(fieldPago) fieldPago.style.opacity = '.4';
+    if(fieldValor) fieldValor.style.opacity = '.4';
+  } else {
+    if(fieldPago) fieldPago.style.opacity = '1';
+    if(fieldValor) fieldValor.style.opacity = '1';
+  }
+}
+
 function openNovaDiariaModal() {
   ['diaria-obs','diaria-valor','diaria-edit-id'].forEach(f=>{const e=document.getElementById(f);if(e)e.value='';});
+  setPresenca('presente');
   document.getElementById('diaria-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('diaria-pago').value = 'pendente';
   const selC = document.getElementById('diaria-colab');
@@ -977,7 +1037,9 @@ function openNovaDiariaModal() {
 async function salvarDiaria() {
   const colaborador_id=v('diaria-colab'), obra_id=v('diaria-obra'), data=v('diaria-data'), valor=v('diaria-valor');
   if (!colaborador_id||!obra_id||!data||!valor) { showToast('Preencha todos os campos obrigatórios'); return; }
-  const payload = { colaborador_id:parseInt(colaborador_id), obra_id:parseInt(obra_id), data, valor:parseFloat(valor), pago:v('diaria-pago'), obs:v('diaria-obs'), usuario_id:currentUser.id };
+  const presenca = document.getElementById('btn-ausente').classList.contains('active') ? 'ausente' : 'presente';
+  const valorFinal = presenca === 'ausente' ? 0 : parseFloat(valor);
+  const payload = { colaborador_id:parseInt(colaborador_id), obra_id:parseInt(obra_id), data, valor:valorFinal, pago: presenca === 'ausente' ? 'pendente' : v('diaria-pago'), obs:v('diaria-obs'), usuario_id:currentUser.id, presenca };
   const {error} = await sb.from('diarias').insert(payload);
   if (error) { showToast('Erro: '+error.message); return; }
   closeModal('modal-diaria'); showToast('Diária registrada!');
@@ -1003,30 +1065,38 @@ async function loadRelatorio() {
   });
   const por_colab = {};
   diariasMes.forEach(d => {
-    if (!por_colab[d.colaborador_id]) por_colab[d.colaborador_id]={dias:0,total:0,pago:0};
+    if (!por_colab[d.colaborador_id]) por_colab[d.colaborador_id]={dias:0,total:0,pago:0,presencas:0,faltas:0};
     por_colab[d.colaborador_id].dias++;
-    por_colab[d.colaborador_id].total += parseFloat(d.valor||0);
-    if (d.pago==='pago') por_colab[d.colaborador_id].pago += parseFloat(d.valor||0);
+    if (d.presenca === 'ausente') {
+      por_colab[d.colaborador_id].faltas++;
+    } else {
+      por_colab[d.colaborador_id].presencas++;
+      por_colab[d.colaborador_id].total += parseFloat(d.valor||0);
+      if (d.pago==='pago') por_colab[d.colaborador_id].pago += parseFloat(d.valor||0);
+    }
   });
   const totalGeral=diariasMes.reduce((s,d)=>s+parseFloat(d.valor||0),0);
   const totalPago=diariasMes.filter(d=>d.pago==='pago').reduce((s,d)=>s+parseFloat(d.valor||0),0);
   const container=document.getElementById('relatorio-content');
   if (!Object.keys(por_colab).length) { container.innerHTML=`<div class="empty"><p>Nenhuma diária em ${MESES[mes]}/${ano}</p></div>`; return; }
+  const totalFaltas = diariasMes.filter(d=>d.presenca==='ausente').length;
   container.innerHTML=`
     <div class="stats-grid" style="margin-bottom:20px;">
       <div class="stat-card"><div class="stat-label">Total do Mês</div><div class="stat-value" style="font-size:20px;">R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
       <div class="stat-card" style="border-color:#dcfce7;"><div class="stat-label">Pago</div><div class="stat-value" style="font-size:20px;color:var(--green);">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
       <div class="stat-card" style="border-color:#fef9c3;"><div class="stat-label">Pendente</div><div class="stat-value" style="font-size:20px;color:var(--yellow);">R$ ${(totalGeral-totalPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-card" style="border-color:#fef2f2;"><div class="stat-label">Faltas</div><div class="stat-value" style="font-size:20px;color:var(--red);">${totalFaltas}</div></div>
     </div>
     <div class="table-wrap">
       <div style="padding:14px 16px;border-bottom:1px solid var(--border);"><strong style="font-size:14px;">Por Colaborador — ${MESES[mes]} ${ano}</strong></div>
-      <table><thead><tr><th>Colaborador</th><th>Dias</th><th>Total</th><th>Pago</th><th>Pendente</th><th>Progresso</th></tr></thead><tbody>` +
+      <table><thead><tr><th>Colaborador</th><th>Presenças</th><th>Faltas</th><th>Total</th><th>Pago</th><th>Pendente</th><th>Progresso</th></tr></thead><tbody>` +
     Object.entries(por_colab).map(([cid,info])=>{
       const c=colabs.find(x=>x.id==cid);
       const pct=info.total>0?Math.round((info.pago/info.total)*100):0;
       return `<tr>
         <td style="font-weight:500;">${c?c.nome:'–'}</td>
-        <td>${info.dias}</td>
+        <td style="font-weight:600;color:var(--green);">${info.presencas}</td>
+        <td style="font-weight:600;color:var(--red);">${info.faltas}</td>
         <td style="font-weight:700;">R$ ${info.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
         <td style="color:var(--green);font-weight:600;">R$ ${info.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
         <td style="color:var(--yellow);font-weight:600;">R$ ${(info.total-info.pago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
