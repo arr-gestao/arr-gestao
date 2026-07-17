@@ -409,10 +409,11 @@
           </button>
         </div>
         <div class="table-wrap">
-          <table>
+          <table class="hide-mobile">
             <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Status</th><th>Ação</th></tr></thead>
             <tbody id="users-tbody"></tbody>
           </table>
+          <div class="show-mobile-only" id="users-cards" style="padding:10px;"></div>
         </div>
       </div>
 
@@ -1120,6 +1121,30 @@ function renderUsuarios() {
         ${u.login!=='admin'?`<button class="btn btn-danger" style="padding:5px 11px;font-size:12px;margin-left:4px;" onclick="confirmDelete('usuario',${u.id},'${esc(u.nome)}')">Excluir</button>`:''}
       </td>
     </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted);">Nenhum usuário</td></tr>';
+
+  // Mobile cards
+  const cards = document.getElementById('users-cards');
+  if (!cards) return;
+  cards.innerHTML = usuarios.map(u => `
+    <div class="colab-card" style="margin-bottom:10px;">
+      <div class="colab-avatar" style="background:${u.perfil==='admin'?'var(--orange)':'var(--navy2)'};">
+        ${u.nome.charAt(0).toUpperCase()}
+      </div>
+      <div class="colab-info">
+        <h3 style="font-size:14px;font-weight:600;">${u.nome}</h3>
+        <p style="font-size:12px;color:var(--muted);margin-top:2px;">
+          <code style="background:var(--bg);padding:1px 6px;border-radius:4px;font-size:11px;">${u.login}</code>
+        </p>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+          ${u.perfil==='admin'?'<span class="badge badge-orange">Admin</span>':'<span class="badge badge-blue">Gestor</span>'}
+          ${u.status==='ativo'?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-gray">Inativo</span>'}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="editUser(${u.id})">Editar</button>
+        ${u.login!=='admin'?`<button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="confirmDelete('usuario',${u.id},'${esc(u.nome)}')">Excluir</button>`:''}
+      </div>
+    </div>`).join('') || '<div class="empty"><p>Nenhum usuário</p></div>';
 }
 function openUserModal() {
   ['user-nome','user-login','user-senha','user-edit-id'].forEach(f=>{const e=document.getElementById(f);if(e)e.value='';});
