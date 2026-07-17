@@ -605,7 +605,7 @@ let selectedMonth = null;
 // ─── BOOT ────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   const h = new Date().getHours();
-  document.getElementById('dash-greeting').textContent = (h<12?'Bom dia':'h<18?Boa tarde':'Boa noite') + '! 👷';
+  document.getElementById('dash-greeting').textContent = (h<12?'Bom dia':h<18?'Boa tarde':'Boa noite') + '! 👷';
   const now = new Date();
   document.getElementById('rel-ano').value = now.getFullYear();
   document.getElementById('rel-mes').value = now.getMonth();
