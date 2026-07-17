@@ -11,248 +11,188 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    /* ─── TOKENS ─── */
     :root {
-      --navy:   #1a2c4e;
-      --navy2:  #243a63;
-      --orange: #f5890a;
-      --orange2:#e07800;
-      --white:  #ffffff;
-      --bg:     #f4f6fb;
-      --surface:#ffffff;
-      --border: #e2e7f0;
-      --text:   #1a2c4e;
-      --muted:  #7a8aaa;
-      --green:  #22c55e;
-      --red:    #ef4444;
-      --yellow: #f59e0b;
-      --radius: 12px;
-      --shadow: 0 2px 12px rgba(26,44,78,.09);
+      --navy:#1a2c4e; --navy2:#243a63; --orange:#f5890a; --orange2:#e07800;
+      --white:#ffffff; --bg:#f4f6fb; --surface:#ffffff; --border:#e2e7f0;
+      --text:#1a2c4e; --muted:#7a8aaa; --green:#22c55e; --red:#ef4444;
+      --yellow:#f59e0b; --radius:12px; --shadow:0 2px 12px rgba(26,44,78,.09);
     }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
+    button{cursor:pointer;border:none;background:none;font-family:inherit;}
+    input,select,textarea{font-family:inherit;}
+    a{text-decoration:none;color:inherit;}
 
-    /* ─── RESET ─── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
-    button { cursor: pointer; border: none; background: none; font-family: inherit; }
-    input, select, textarea { font-family: inherit; }
-    a { text-decoration: none; color: inherit; }
+    /* LOADING */
+    #app-loading{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:20px;}
+    .loading-logo{display:flex;align-items:center;gap:14px;}
+    .loading-logo-text h1{color:white;font-size:28px;font-weight:700;}
+    .loading-logo-text p{color:rgba(255,255,255,.5);font-size:11px;letter-spacing:2px;text-transform:uppercase;}
+    .spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,.2);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
 
-    /* ─── LOADING ─── */
-    #app-loading {
-      position: fixed; inset: 0; background: var(--navy);
-      display: flex; align-items: center; justify-content: center; z-index: 9999;
-      flex-direction: column; gap: 20px;
+    /* LOGIN */
+    #login-screen{display:none;min-height:100vh;background:linear-gradient(145deg,var(--navy),var(--navy2));align-items:center;justify-content:center;padding:24px;}
+    .login-card{background:white;border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.25);}
+    .login-logo{display:flex;align-items:center;gap:14px;margin-bottom:32px;justify-content:center;}
+    .login-logo-text h1{font-size:26px;font-weight:700;color:var(--navy);}
+    .login-logo-text p{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);}
+    .login-title{font-size:18px;font-weight:600;margin-bottom:24px;color:var(--navy);}
+    .form-group{margin-bottom:16px;}
+    .form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+    .form-group input{width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;outline:none;transition:border-color .2s;}
+    .form-group input:focus{border-color:var(--orange);}
+    .btn-login{width:100%;padding:14px;background:var(--orange);color:white;border-radius:10px;font-size:15px;font-weight:600;margin-top:8px;transition:background .2s;}
+    .btn-login:hover{background:var(--orange2);}
+    .login-error{background:#fef2f2;color:var(--red);padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px;display:none;text-align:center;}
+
+    /* APP SHELL */
+    #app{display:none;height:100vh;flex-direction:column;}
+    .topbar{background:var(--navy);color:white;padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 12px rgba(0,0,0,.15);z-index:100;}
+    .topbar-logo{display:flex;align-items:center;gap:10px;}
+    .topbar-logo-text h2{font-size:16px;font-weight:700;color:white;}
+    .topbar-logo-text p{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);}
+    .topbar-right{display:flex;align-items:center;gap:10px;}
+    .topbar-user{font-size:12px;color:rgba(255,255,255,.6);padding:4px 10px;background:rgba(255,255,255,.08);border-radius:6px;}
+    .btn-logout{padding:7px 14px;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;color:rgba(255,255,255,.8);font-size:12px;font-weight:500;transition:all .2s;}
+    .btn-logout:hover{border-color:white;color:white;}
+
+    /* LAYOUT */
+    .app-body{display:flex;flex:1;overflow:hidden;}
+    .sidebar{width:240px;background:var(--navy);flex-shrink:0;display:flex;flex-direction:column;padding:16px 12px;overflow-y:auto;}
+    .main{flex:1;overflow-y:auto;padding:24px;}
+    .nav-section-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1.5px;padding:12px 12px 6px;}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;color:rgba(255,255,255,.65);font-size:14px;font-weight:500;transition:all .15s;cursor:pointer;margin-bottom:2px;}
+    .nav-item:hover{background:rgba(255,255,255,.08);color:white;}
+    .nav-item.active{background:var(--orange);color:white;}
+    .nav-item svg{width:18px;height:18px;flex-shrink:0;}
+    .nav-item.admin-only{display:none;}
+
+    /* MOBILE NAV */
+    .mobile-nav{display:none;background:var(--navy);border-top:1px solid rgba(255,255,255,.1);padding:4px 0 6px;flex-shrink:0;}
+    .mobile-nav-inner{display:flex;justify-content:space-around;}
+    .mobile-nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 8px;color:rgba(255,255,255,.5);font-size:9px;font-weight:500;border-radius:8px;min-width:52px;transition:color .15s;cursor:pointer;}
+    .mobile-nav-item svg{width:19px;height:19px;}
+    .mobile-nav-item.active{color:var(--orange);}
+    .mobile-nav-item.admin-only{display:none;}
+
+    /* PAGE */
+    .page-header{margin-bottom:24px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+    .page-header h1{font-size:22px;font-weight:700;color:var(--navy);}
+    .page-header p{font-size:14px;color:var(--muted);margin-top:2px;}
+
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;transition:all .15s;}
+    .btn-primary{background:var(--orange);color:white;}
+    .btn-primary:hover{background:var(--orange2);}
+    .btn-secondary{background:var(--bg);color:var(--text);border:1.5px solid var(--border);}
+    .btn-secondary:hover{background:var(--border);}
+    .btn-danger{background:#fef2f2;color:var(--red);}
+    .btn-danger:hover{background:#fee2e2;}
+    .btn svg{width:15px;height:15px;}
+
+    /* STATS */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+    .stat-card{background:var(--surface);border-radius:var(--radius);padding:18px 16px;box-shadow:var(--shadow);border:1px solid var(--border);}
+    .stat-card .stat-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+    .stat-card .stat-value{font-size:26px;font-weight:700;color:var(--navy);}
+    .stat-card .stat-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+    .stat-card.accent{background:var(--orange);border-color:var(--orange);}
+    .stat-card.accent .stat-label,.stat-card.accent .stat-sub{color:rgba(255,255,255,.75);}
+    .stat-card.accent .stat-value{color:white;}
+
+    /* TABLE */
+    .table-wrap{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);overflow:hidden;}
+    .table-toolbar{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--border);}
+    .search-box{display:flex;align-items:center;gap:8px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;min-width:180px;}
+    .search-box svg{width:15px;height:15px;color:var(--muted);flex-shrink:0;}
+    .search-box input{background:none;border:none;outline:none;font-size:13px;color:var(--text);width:100%;}
+    table{width:100%;border-collapse:collapse;}
+    th{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg);}
+    td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:var(--bg);}
+
+    /* BADGES */
+    .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+    .badge-green{background:#dcfce7;color:#16a34a;}
+    .badge-red{background:#fef2f2;color:var(--red);}
+    .badge-yellow{background:#fef9c3;color:#a16207;}
+    .badge-blue{background:#dbeafe;color:#1d4ed8;}
+    .badge-gray{background:#f3f4f6;color:#6b7280;}
+    .badge-orange{background:#fff7ed;color:var(--orange2);}
+    .badge-purple{background:#f3e8ff;color:#7c3aed;}
+
+    /* MODAL */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
+    .modal-backdrop.open{display:flex;}
+    .modal{background:white;border-radius:16px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.25);}
+    .modal-header{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;}
+    .modal-header h2{font-size:17px;font-weight:700;color:var(--navy);}
+    .modal-close{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:background .15s;}
+    .modal-close:hover{background:var(--bg);}
+    .modal-body{padding:20px;}
+    .modal-footer{padding:0 20px 20px;display:flex;gap:10px;justify-content:flex-end;}
+    .field{margin-bottom:14px;}
+    .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;}
+    .field input,.field select,.field textarea{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;transition:border-color .2s;}
+    .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--orange);}
+    .field textarea{resize:vertical;min-height:80px;}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+    /* MISC */
+    .empty{text-align:center;padding:48px 24px;color:var(--muted);}
+    .empty svg{width:48px;height:48px;margin:0 auto 12px;opacity:.3;display:block;}
+    .colab-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;}
+    .colab-avatar{width:44px;height:44px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0;}
+    .colab-info{flex:1;}
+    .colab-info h3{font-size:14px;font-weight:600;}
+    .colab-info p{font-size:12px;color:var(--muted);margin-top:2px;}
+    .obra-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:16px;margin-bottom:10px;}
+    .obra-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+    .obra-card-header h3{font-size:15px;font-weight:600;color:var(--navy);}
+    .obra-card-footer{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+    .diaria-item{background:var(--surface);border-radius:10px;border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+    .diaria-date{font-size:12px;font-weight:700;color:var(--navy);background:var(--bg);border-radius:8px;padding:6px 10px;text-align:center;min-width:52px;}
+    .diaria-date small{display:block;font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;}
+    .diaria-info{flex:1;}
+    .diaria-info h4{font-size:13px;font-weight:600;}
+    .diaria-info p{font-size:11px;color:var(--muted);margin-top:2px;}
+    .month-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+    .month-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;}
+    .month-chip.active{background:var(--orange);color:white;border-color:var(--orange);}
+    .progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:6px;}
+    .progress-fill{height:100%;background:var(--orange);border-radius:3px;transition:width .4s;}
+    .section{display:none;}
+    .section.active{display:block;}
+
+    /* FILTRO USUÁRIO (admin) */
+    .user-filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);}
+    .user-filter-bar label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;}
+    .user-filter-bar select{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:var(--bg);}
+    .user-filter-bar select:focus{border-color:var(--orange);}
+
+    /* TOAST */
+    #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:white;padding:12px 22px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all .3s;z-index:9999;white-space:nowrap;}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    /* RESPONSIVE */
+    @media(max-width:768px){
+      .sidebar{display:none;}
+      .mobile-nav{display:block;}
+      .main{padding:14px;}
+      .page-header h1{font-size:18px;}
+      .stats-grid{grid-template-columns:1fr 1fr;gap:10px;}
+      .stat-card{padding:14px 12px;}
+      .stat-card .stat-value{font-size:20px;}
+      th,td{padding:10px 12px;}
+      .hide-mobile{display:none !important;}
+      .table-toolbar{padding:10px 12px;}
+      #toast{bottom:80px;max-width:calc(100vw - 32px);white-space:normal;text-align:center;}
+      .field-row{grid-template-columns:1fr;}
     }
-    .loading-logo { display: flex; align-items: center; gap: 14px; }
-    .loading-logo svg { width: 48px; height: 48px; }
-    .loading-logo-text h1 { color: white; font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
-    .loading-logo-text p  { color: rgba(255,255,255,.5); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; }
-    .spinner { width: 32px; height: 32px; border: 3px solid rgba(255,255,255,.2); border-top-color: var(--orange); border-radius: 50%; animation: spin .7s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ─── LOGIN ─── */
-    #login-screen {
-      display: none; min-height: 100vh;
-      background: linear-gradient(145deg, var(--navy) 0%, var(--navy2) 100%);
-      align-items: center; justify-content: center; padding: 24px;
-    }
-    .login-card {
-      background: white; border-radius: 20px; padding: 40px 36px;
-      width: 100%; max-width: 400px; box-shadow: 0 24px 64px rgba(0,0,0,.25);
-    }
-    .login-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; justify-content: center; }
-    .login-logo svg { width: 52px; height: 52px; }
-    .login-logo-text h1 { font-size: 26px; font-weight: 700; color: var(--navy); }
-    .login-logo-text p  { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); }
-    .login-title { font-size: 18px; font-weight: 600; margin-bottom: 24px; color: var(--navy); }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
-    .form-group input { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px; outline: none; transition: border-color .2s; }
-    .form-group input:focus { border-color: var(--orange); }
-    .btn-login { width: 100%; padding: 14px; background: var(--orange); color: white; border-radius: 10px; font-size: 15px; font-weight: 600; margin-top: 8px; transition: background .2s, transform .1s; }
-    .btn-login:hover { background: var(--orange2); }
-    .btn-login:active { transform: scale(.98); }
-    .login-error { background: #fef2f2; color: var(--red); padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 12px; display: none; text-align: center; }
-
-    /* ─── APP SHELL ─── */
-    #app { display: none; height: 100vh; flex-direction: column; }
-
-    /* ─── TOPBAR ─── */
-    .topbar {
-      background: var(--navy); color: white; padding: 0 20px;
-      height: 60px; display: flex; align-items: center; justify-content: space-between;
-      flex-shrink: 0; box-shadow: 0 2px 12px rgba(0,0,0,.15); position: relative; z-index: 100;
-    }
-    .topbar-left { display: flex; align-items: center; gap: 12px; }
-    .topbar-logo { display: flex; align-items: center; gap: 10px; }
-    .topbar-logo svg { width: 32px; height: 32px; }
-    .topbar-logo-text h2 { font-size: 16px; font-weight: 700; color: white; }
-    .topbar-logo-text p  { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.5); }
-    .btn-logout { padding: 7px 14px; border: 1.5px solid rgba(255,255,255,.25); border-radius: 8px; color: rgba(255,255,255,.8); font-size: 12px; font-weight: 500; transition: all .2s; }
-    .btn-logout:hover { border-color: white; color: white; }
-
-    /* ─── LAYOUT ─── */
-    .app-body { display: flex; flex: 1; overflow: hidden; }
-    .sidebar {
-      width: 240px; background: var(--navy); flex-shrink: 0;
-      display: flex; flex-direction: column; padding: 16px 12px;
-      overflow-y: auto; transition: transform .3s;
-    }
-    .main { flex: 1; overflow-y: auto; padding: 24px; }
-
-    /* ─── NAV ITEMS ─── */
-    .nav-section-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: 1.5px; padding: 12px 12px 6px; }
-    .nav-item {
-      display: flex; align-items: center; gap: 10px; padding: 11px 12px;
-      border-radius: 8px; color: rgba(255,255,255,.65); font-size: 14px; font-weight: 500;
-      transition: all .15s; cursor: pointer; margin-bottom: 2px;
-    }
-    .nav-item:hover { background: rgba(255,255,255,.08); color: white; }
-    .nav-item.active { background: var(--orange); color: white; }
-    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
-
-    /* ─── MOBILE NAV ─── */
-    .mobile-nav {
-      display: none; background: var(--navy); border-top: 1px solid rgba(255,255,255,.1);
-      padding: 6px 0 8px; flex-shrink: 0;
-    }
-    .mobile-nav-inner { display: flex; justify-content: space-around; }
-    .mobile-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 12px; color: rgba(255,255,255,.5); font-size: 10px; font-weight: 500; border-radius: 8px; min-width: 64px; transition: color .15s; }
-    .mobile-nav-item svg { width: 20px; height: 20px; }
-    .mobile-nav-item.active { color: var(--orange); }
-
-    /* ─── PAGE TITLES ─── */
-    .page-header { margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-    .page-header h1 { font-size: 22px; font-weight: 700; color: var(--navy); }
-    .page-header p  { font-size: 14px; color: var(--muted); margin-top: 2px; }
-
-    /* ─── BUTTONS ─── */
-    .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 600; transition: all .15s; }
-    .btn-primary  { background: var(--orange); color: white; }
-    .btn-primary:hover  { background: var(--orange2); }
-    .btn-secondary { background: var(--bg); color: var(--text); border: 1.5px solid var(--border); }
-    .btn-secondary:hover { background: var(--border); }
-    .btn-danger { background: #fef2f2; color: var(--red); }
-    .btn-danger:hover { background: #fee2e2; }
-    .btn svg { width: 15px; height: 15px; }
-
-    /* ─── CARDS / STAT TILES ─── */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
-    .stat-card { background: var(--surface); border-radius: var(--radius); padding: 18px 16px; box-shadow: var(--shadow); border: 1px solid var(--border); }
-    .stat-card .stat-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
-    .stat-card .stat-value { font-size: 26px; font-weight: 700; color: var(--navy); }
-    .stat-card .stat-sub   { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .stat-card.accent { background: var(--orange); border-color: var(--orange); }
-    .stat-card.accent .stat-label, .stat-card.accent .stat-sub { color: rgba(255,255,255,.75); }
-    .stat-card.accent .stat-value { color: white; }
-
-    /* ─── DATA TABLE ─── */
-    .table-wrap { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); overflow: hidden; }
-    .table-toolbar { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid var(--border); }
-    .search-box { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 12px; min-width: 200px; }
-    .search-box svg { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
-    .search-box input { background: none; border: none; outline: none; font-size: 13px; color: var(--text); width: 100%; }
-    table { width: 100%; border-collapse: collapse; }
-    th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); background: var(--bg); }
-    td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--bg); }
-
-    /* ─── BADGES ─── */
-    .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .badge-green  { background: #dcfce7; color: #16a34a; }
-    .badge-red    { background: #fef2f2; color: var(--red); }
-    .badge-yellow { background: #fef9c3; color: #a16207; }
-    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
-    .badge-gray   { background: #f3f4f6; color: #6b7280; }
-    .badge-orange { background: #fff7ed; color: var(--orange2); }
-
-    /* ─── MODAL ─── */
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 500; display: none; align-items: center; justify-content: center; padding: 16px; }
-    .modal-backdrop.open { display: flex; }
-    .modal { background: white; border-radius: 16px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,.25); }
-    .modal-header { padding: 20px 20px 0; display: flex; align-items: center; justify-content: space-between; }
-    .modal-header h2 { font-size: 17px; font-weight: 700; color: var(--navy); }
-    .modal-close { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--muted); transition: background .15s; }
-    .modal-close:hover { background: var(--bg); }
-    .modal-body { padding: 20px; }
-    .modal-footer { padding: 0 20px 20px; display: flex; gap: 10px; justify-content: flex-end; }
-
-    /* ─── FORM INSIDE MODAL ─── */
-    .field { margin-bottom: 14px; }
-    .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
-    .field input, .field select, .field textarea { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 9px; font-size: 14px; outline: none; transition: border-color .2s; }
-    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--orange); }
-    .field textarea { resize: vertical; min-height: 80px; }
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    /* ─── EMPTY STATE ─── */
-    .empty { text-align: center; padding: 48px 24px; color: var(--muted); }
-    .empty svg { width: 48px; height: 48px; margin: 0 auto 12px; opacity: .3; display: block; }
-    .empty p { font-size: 15px; }
-    .empty small { font-size: 13px; }
-
-    /* ─── COLABORADOR CARD (mobile view) ─── */
-    .colab-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; }
-    .colab-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: white; flex-shrink: 0; }
-    .colab-info { flex: 1; }
-    .colab-info h3 { font-size: 14px; font-weight: 600; }
-    .colab-info p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .colab-valor  { font-size: 13px; font-weight: 700; color: var(--orange2); white-space: nowrap; }
-
-    /* ─── TOAST ─── */
-    #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--navy); color: white; padding: 12px 22px; border-radius: 10px; font-size: 13px; font-weight: 500; opacity: 0; pointer-events: none; transition: all .3s; z-index: 9999; white-space: nowrap; }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* ─── RESPONSIVE ─── */
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .mobile-nav { display: block; }
-      .main { padding: 16px; }
-      .page-header h1 { font-size: 18px; }
-      .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-      .stat-card { padding: 14px 12px; }
-      .stat-card .stat-value { font-size: 22px; }
-      th, td { padding: 10px 12px; }
-      .hide-mobile { display: none !important; }
-      .table-toolbar { padding: 10px 12px; }
-      #toast { bottom: 80px; max-width: calc(100vw - 32px); white-space: normal; text-align: center; }
-    }
-    @media (min-width: 769px) {
-      .show-mobile-only { display: none !important; }
-    }
-
-    /* ─── SECTIONS ─── */
-    .section { display: none; }
-    .section.active { display: block; }
-
-    /* ─── OBRA CARD ─── */
-    .obra-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 10px; cursor: pointer; transition: box-shadow .15s; }
-    .obra-card:hover { box-shadow: var(--shadow); }
-    .obra-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-    .obra-card-header h3 { font-size: 15px; font-weight: 600; color: var(--navy); }
-    .obra-card p { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .obra-card-footer { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-
-    /* ─── REGISTRO DIÁRIA ─── */
-    .diaria-item { background: var(--surface); border-radius: 10px; border: 1px solid var(--border); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
-    .diaria-date { font-size: 12px; font-weight: 700; color: var(--navy); background: var(--bg); border-radius: 8px; padding: 6px 10px; text-align: center; min-width: 52px; }
-    .diaria-date small { display: block; font-size: 10px; font-weight: 500; color: var(--muted); text-transform: uppercase; }
-    .diaria-info { flex: 1; }
-    .diaria-info h4 { font-size: 13px; font-weight: 600; }
-    .diaria-info p  { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .diaria-valor   { font-size: 14px; font-weight: 700; color: var(--orange2); }
-
-    /* ─── MONTH FILTER ─── */
-    .month-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-    .month-chip { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--bg); color: var(--muted); border: 1.5px solid var(--border); cursor: pointer; transition: all .15s; }
-    .month-chip.active { background: var(--orange); color: white; border-color: var(--orange); }
-
-    /* progress bar */
-    .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
-    .progress-fill { height: 100%; background: var(--orange); border-radius: 3px; transition: width .4s; }
+    @media(min-width:769px){.show-mobile-only{display:none !important;}}
   </style>
 </head>
 <body>
@@ -260,22 +200,18 @@
 <!-- LOADING -->
 <div id="app-loading">
   <div class="loading-logo">
-    <!-- ARR LOGO SVG -->
-    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:48px;height:48px">
       <rect width="60" height="60" rx="12" fill="white"/>
       <polygon points="12,50 30,10 48,50" fill="none" stroke="#1a2c4e" stroke-width="4" stroke-linejoin="round"/>
       <polygon points="20,50 30,28 40,50" fill="#f5890a"/>
     </svg>
-    <div class="loading-logo-text">
-      <h1>ARR</h1>
-      <p>Projeto e Construções</p>
-    </div>
+    <div class="loading-logo-text"><h1>ARR</h1><p>Projeto e Construções</p></div>
   </div>
   <div class="spinner"></div>
 </div>
 
 <!-- LOGIN -->
-<div id="login-screen" style="display:none; min-height:100vh; background:linear-gradient(145deg,#1a2c4e,#243a63); align-items:center; justify-content:center; padding:24px;">
+<div id="login-screen" style="display:none;min-height:100vh;background:linear-gradient(145deg,#1a2c4e,#243a63);align-items:center;justify-content:center;padding:24px;">
   <div class="login-card">
     <div class="login-logo">
       <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:52px;height:52px">
@@ -283,215 +219,210 @@
         <polygon points="12,50 30,10 48,50" fill="none" stroke="white" stroke-width="4" stroke-linejoin="round"/>
         <polygon points="20,50 30,28 40,50" fill="#f5890a"/>
       </svg>
-      <div class="login-logo-text">
-        <h1>ARR</h1>
-        <p>Projeto e Construções</p>
-      </div>
+      <div class="login-logo-text"><h1>ARR</h1><p>Projeto e Construções</p></div>
     </div>
     <p class="login-title">Acesso ao Sistema</p>
-    <div class="form-group">
-      <label>Usuário</label>
-      <input type="text" id="login-user" placeholder="admin" autocomplete="username" />
-    </div>
-    <div class="form-group">
-      <label>Senha</label>
-      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
-    </div>
+    <div class="form-group"><label>Usuário</label><input type="text" id="login-user" placeholder="seu usuário" autocomplete="username"/></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"/></div>
     <button class="btn-login" onclick="doLogin()">Entrar</button>
     <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
   </div>
 </div>
 
 <!-- APP -->
-<div id="app" style="display:none; height:100vh; flex-direction:column;">
+<div id="app" style="display:none;height:100vh;flex-direction:column;">
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-left">
-      <div class="topbar-logo">
-        <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="12,50 30,10 48,50" fill="none" stroke="white" stroke-width="4" stroke-linejoin="round"/>
-          <polygon points="20,50 30,28 40,50" fill="#f5890a"/>
-        </svg>
-        <div class="topbar-logo-text">
-          <h2>ARR Gestão</h2>
-          <p>Colaboradores</p>
-        </div>
-      </div>
+    <div class="topbar-logo">
+      <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:32px">
+        <polygon points="12,50 30,10 48,50" fill="none" stroke="white" stroke-width="4" stroke-linejoin="round"/>
+        <polygon points="20,50 30,28 40,50" fill="#f5890a"/>
+      </svg>
+      <div class="topbar-logo-text"><h2>ARR Gestão</h2><p>Colaboradores</p></div>
     </div>
-    <button class="btn-logout" onclick="doLogout()">Sair</button>
+    <div class="topbar-right">
+      <span class="topbar-user" id="topbar-username"></span>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
   </div>
 
   <div class="app-body">
-
-    <!-- SIDEBAR (desktop) -->
+    <!-- SIDEBAR -->
     <nav class="sidebar">
       <div class="nav-section-label">Menu</div>
       <div class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Dashboard
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard
       </div>
       <div class="nav-item" onclick="navigate('obras')" id="nav-obras">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Obras
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Obras
       </div>
       <div class="nav-item" onclick="navigate('colaboradores')" id="nav-colaboradores">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Colaboradores
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Colaboradores
       </div>
       <div class="nav-item" onclick="navigate('diarias')" id="nav-diarias">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Diárias
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Diárias
       </div>
       <div class="nav-item" onclick="navigate('relatorio')" id="nav-relatorio">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Relatório
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Relatório
       </div>
       <div class="nav-section-label" style="margin-top:auto;padding-top:20px;">Config</div>
+      <div class="nav-item admin-only" onclick="navigate('usuarios')" id="nav-usuarios">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>Usuários
+      </div>
       <div class="nav-item" onclick="navigate('configuracoes')" id="nav-configuracoes">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        Configurações
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Configurações
       </div>
     </nav>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN -->
     <main class="main">
 
-      <!-- ── DASHBOARD ── -->
+      <!-- DASHBOARD -->
       <div id="sec-dashboard" class="section active">
         <div class="page-header">
-          <div>
-            <h1 id="dash-greeting">Bom dia! 👷</h1>
-            <p>Resumo geral da operação</p>
-          </div>
-          <button class="btn btn-primary" onclick="navigate('diarias'); openNovaDiariaModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Registrar Diária
+          <div><h1 id="dash-greeting">Bom dia! 👷</h1><p id="dash-subtext">Resumo geral da operação</p></div>
+          <button class="btn btn-primary" onclick="navigate('diarias');openNovaDiariaModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Registrar Diária
           </button>
         </div>
-        <div class="stats-grid" id="dash-stats">
+        <!-- filtro de usuário visível só pro admin -->
+        <div class="user-filter-bar admin-only" id="dash-user-filter">
+          <label>Visualizando:</label>
+          <select id="dash-filter-user" onchange="renderDashboard()">
+            <option value="">Todos os usuários</option>
+          </select>
+        </div>
+        <div class="stats-grid">
           <div class="stat-card"><div class="stat-label">Colaboradores</div><div class="stat-value" id="stat-colab">–</div><div class="stat-sub">ativos</div></div>
           <div class="stat-card"><div class="stat-label">Obras</div><div class="stat-value" id="stat-obras">–</div><div class="stat-sub">em andamento</div></div>
           <div class="stat-card accent"><div class="stat-label">Diárias este mês</div><div class="stat-value" id="stat-diarias-mes">–</div><div class="stat-sub" id="stat-diarias-mes-label">–</div></div>
           <div class="stat-card"><div class="stat-label">Total a pagar</div><div class="stat-value" id="stat-total">–</div><div class="stat-sub">este mês</div></div>
         </div>
-
         <div class="table-wrap">
-          <div class="table-toolbar" style="padding:14px 16px 10px;">
-            <strong style="font-size:14px;">Últimas Diárias</strong>
-          </div>
+          <div class="table-toolbar" style="padding:14px 16px 10px;"><strong style="font-size:14px;">Últimas Diárias</strong></div>
           <div id="dash-ultimas"></div>
         </div>
       </div>
 
-      <!-- ── OBRAS ── -->
+      <!-- OBRAS -->
       <div id="sec-obras" class="section">
         <div class="page-header">
           <div><h1>Obras</h1><p>Gerencie os canteiros de trabalho</p></div>
           <button class="btn btn-primary" onclick="openObraModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Nova Obra
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova Obra
           </button>
         </div>
         <div id="obras-list"></div>
       </div>
 
-      <!-- ── COLABORADORES ── -->
+      <!-- COLABORADORES -->
       <div id="sec-colaboradores" class="section">
         <div class="page-header">
           <div><h1>Colaboradores</h1><p>Equipe de campo</p></div>
           <button class="btn btn-primary" onclick="openColabModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Novo Colaborador
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Colaborador
           </button>
         </div>
         <div class="table-wrap">
           <div class="table-toolbar">
             <div class="search-box">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="Buscar colaborador…" oninput="filterColabs(this.value)" />
+              <input type="text" placeholder="Buscar colaborador…" oninput="filterColabs(this.value)"/>
             </div>
           </div>
-          <div id="colab-list-wrap">
-            <!-- desktop table -->
-            <table class="hide-mobile" id="colab-table">
-              <thead><tr>
-                <th>Nome</th><th>Função</th><th>Diária Base</th><th>Status</th><th>Ação</th>
-              </tr></thead>
-              <tbody id="colab-tbody"></tbody>
-            </table>
-            <!-- mobile cards -->
-            <div class="show-mobile-only" id="colab-cards" style="padding:10px;"></div>
-          </div>
+          <table class="hide-mobile" id="colab-table">
+            <thead><tr><th>Nome</th><th>Função</th><th>Diária Base</th><th>Status</th><th>Ação</th></tr></thead>
+            <tbody id="colab-tbody"></tbody>
+          </table>
+          <div class="show-mobile-only" id="colab-cards" style="padding:10px;"></div>
         </div>
       </div>
 
-      <!-- ── DIÁRIAS ── -->
+      <!-- DIÁRIAS -->
       <div id="sec-diarias" class="section">
         <div class="page-header">
           <div><h1>Diárias</h1><p>Registros de dias trabalhados</p></div>
           <button class="btn btn-primary" onclick="openNovaDiariaModal()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Nova Diária
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nova Diária
           </button>
+        </div>
+        <!-- filtro usuário só admin -->
+        <div class="user-filter-bar admin-only" id="diaria-user-filter">
+          <label>Filtrar por usuário:</label>
+          <select id="diaria-filter-user" onchange="loadDiarias()">
+            <option value="">Todos</option>
+          </select>
         </div>
         <div class="month-filter" id="diaria-month-filter"></div>
         <div class="table-wrap">
           <div class="table-toolbar">
             <div class="search-box">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" placeholder="Buscar nome ou obra…" oninput="filterDiarias(this.value)" />
+              <input type="text" placeholder="Buscar nome ou obra…" oninput="filterDiarias(this.value)"/>
             </div>
             <span id="diaria-total-label" style="font-size:13px;font-weight:600;color:var(--orange2);"></span>
           </div>
           <table class="hide-mobile">
-            <thead><tr>
-              <th>Data</th><th>Colaborador</th><th>Obra</th><th>Valor</th><th>Obs</th><th>Ação</th>
-            </tr></thead>
+            <thead><tr><th>Data</th><th>Colaborador</th><th>Obra</th><th class="admin-only">Lançado por</th><th>Valor</th><th>Status</th><th>Ação</th></tr></thead>
             <tbody id="diaria-tbody"></tbody>
           </table>
           <div class="show-mobile-only" id="diaria-cards" style="padding:10px;"></div>
         </div>
       </div>
 
-      <!-- ── RELATÓRIO ── -->
+      <!-- RELATÓRIO -->
       <div id="sec-relatorio" class="section">
-        <div class="page-header">
-          <div><h1>Relatório</h1><p>Resumo financeiro por colaborador</p></div>
+        <div class="page-header"><div><h1>Relatório</h1><p>Resumo financeiro por colaborador</p></div></div>
+        <!-- filtro usuário só admin -->
+        <div class="user-filter-bar admin-only" id="rel-user-filter">
+          <label>Filtrar por usuário:</label>
+          <select id="rel-filter-user" onchange="loadRelatorio()">
+            <option value="">Todos</option>
+          </select>
         </div>
         <div class="field-row" style="margin-bottom:16px;max-width:380px;">
-          <div class="field">
-            <label>Mês</label>
+          <div class="field"><label>Mês</label>
             <select id="rel-mes" onchange="loadRelatorio()">
-              <option value="0">Janeiro</option><option value="1">Fevereiro</option>
-              <option value="2">Março</option><option value="3">Abril</option>
-              <option value="4">Maio</option><option value="5">Junho</option>
-              <option value="6">Julho</option><option value="7">Agosto</option>
-              <option value="8">Setembro</option><option value="9">Outubro</option>
-              <option value="10">Novembro</option><option value="11">Dezembro</option>
+              <option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option>
+              <option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option>
+              <option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option>
+              <option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option>
             </select>
           </div>
-          <div class="field">
-            <label>Ano</label>
-            <input type="number" id="rel-ano" value="" onchange="loadRelatorio()" />
-          </div>
+          <div class="field"><label>Ano</label><input type="number" id="rel-ano" onchange="loadRelatorio()"/></div>
         </div>
         <div id="relatorio-content"></div>
       </div>
 
-      <!-- ── CONFIGURAÇÕES ── -->
+      <!-- USUÁRIOS (só admin) -->
+      <div id="sec-usuarios" class="section">
+        <div class="page-header">
+          <div><h1>Usuários</h1><p>Gestores com acesso ao sistema</p></div>
+          <button class="btn btn-primary" onclick="openUserModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Novo Usuário
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Status</th><th>Ação</th></tr></thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CONFIGURAÇÕES -->
       <div id="sec-configuracoes" class="section">
         <div class="page-header"><div><h1>Configurações</h1><p>Dados de acesso ao sistema</p></div></div>
         <div class="table-wrap" style="max-width:480px;">
           <div style="padding:20px;">
-            <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">Alterar Senha do Administrador</h3>
-            <div class="field"><label>Senha Atual</label><input type="password" id="cfg-senha-atual" /></div>
-            <div class="field"><label>Nova Senha</label><input type="password" id="cfg-nova-senha" /></div>
-            <div class="field"><label>Confirmar Nova Senha</label><input type="password" id="cfg-conf-senha" /></div>
-            <button class="btn btn-primary" onclick="alterarSenha()" style="margin-top:4px;">Salvar Senha</button>
+            <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">Alterar Minha Senha</h3>
+            <div class="field"><label>Senha Atual</label><input type="password" id="cfg-senha-atual"/></div>
+            <div class="field"><label>Nova Senha</label><input type="password" id="cfg-nova-senha"/></div>
+            <div class="field"><label>Confirmar Nova Senha</label><input type="password" id="cfg-conf-senha"/></div>
+            <button class="btn btn-primary" onclick="alterarSenha()">Salvar Senha</button>
             <div id="cfg-msg" style="margin-top:10px;font-size:13px;"></div>
           </div>
-
         </div>
       </div>
 
@@ -502,35 +433,30 @@
   <nav class="mobile-nav">
     <div class="mobile-nav-inner">
       <div class="mobile-nav-item active" onclick="navigate('dashboard')" id="mnav-dashboard">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Início
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Início
       </div>
       <div class="mobile-nav-item" onclick="navigate('obras')" id="mnav-obras">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Obras
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Obras
       </div>
       <div class="mobile-nav-item" onclick="navigate('colaboradores')" id="mnav-colaboradores">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        Equipe
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Equipe
       </div>
       <div class="mobile-nav-item" onclick="navigate('diarias')" id="mnav-diarias">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Diárias
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Diárias
       </div>
       <div class="mobile-nav-item" onclick="navigate('relatorio')" id="mnav-relatorio">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Relatório
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Relatório
+      </div>
+      <div class="mobile-nav-item" onclick="navigate('configuracoes')" id="mnav-configuracoes">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Config
       </div>
     </div>
   </nav>
 </div>
 
-<!-- TOAST -->
 <div id="toast"></div>
 
-<!-- ──────────── MODALS ──────────── -->
-
-<!-- Modal Nova/Editar Obra -->
+<!-- MODAL OBRA -->
 <div class="modal-backdrop" id="modal-obra">
   <div class="modal">
     <div class="modal-header">
@@ -538,16 +464,15 @@
       <button class="modal-close" onclick="closeModal('modal-obra')"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
-      <input type="hidden" id="obra-edit-id" />
-      <div class="field"><label>Nome da Obra *</label><input type="text" id="obra-nome" placeholder="Ex: Residência Rua das Flores" /></div>
-      <div class="field"><label>Cliente / Responsável</label><input type="text" id="obra-cliente" placeholder="Nome do cliente" /></div>
-      <div class="field"><label>Endereço</label><input type="text" id="obra-endereco" placeholder="Rua, nº, bairro, cidade" /></div>
+      <input type="hidden" id="obra-edit-id"/>
+      <div class="field"><label>Nome da Obra *</label><input type="text" id="obra-nome" placeholder="Ex: Residência Rua das Flores"/></div>
+      <div class="field"><label>Cliente / Responsável</label><input type="text" id="obra-cliente" placeholder="Nome do cliente"/></div>
+      <div class="field"><label>Endereço</label><input type="text" id="obra-endereco" placeholder="Rua, nº, bairro, cidade"/></div>
       <div class="field-row">
-        <div class="field"><label>Data Início</label><input type="date" id="obra-inicio" /></div>
-        <div class="field"><label>Previsão Fim</label><input type="date" id="obra-fim" /></div>
+        <div class="field"><label>Data Início</label><input type="date" id="obra-inicio"/></div>
+        <div class="field"><label>Previsão Fim</label><input type="date" id="obra-fim"/></div>
       </div>
-      <div class="field">
-        <label>Status</label>
+      <div class="field"><label>Status</label>
         <select id="obra-status">
           <option value="em_andamento">Em Andamento</option>
           <option value="concluida">Concluída</option>
@@ -564,7 +489,7 @@
   </div>
 </div>
 
-<!-- Modal Colaborador -->
+<!-- MODAL COLABORADOR -->
 <div class="modal-backdrop" id="modal-colab">
   <div class="modal">
     <div class="modal-header">
@@ -572,19 +497,16 @@
       <button class="modal-close" onclick="closeModal('modal-colab')"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
-      <input type="hidden" id="colab-edit-id" />
-      <div class="field"><label>Nome Completo *</label><input type="text" id="colab-nome" placeholder="Nome do colaborador" /></div>
+      <input type="hidden" id="colab-edit-id"/>
+      <div class="field"><label>Nome Completo *</label><input type="text" id="colab-nome" placeholder="Nome do colaborador"/></div>
       <div class="field-row">
-        <div class="field"><label>Função / Cargo</label><input type="text" id="colab-funcao" placeholder="Ex: Gesseio, Elétrica…" /></div>
-        <div class="field"><label>Telefone</label><input type="tel" id="colab-tel" placeholder="(11) 99999-9999" /></div>
+        <div class="field"><label>Função / Cargo</label><input type="text" id="colab-funcao" placeholder="Ex: Gesseio, Elétrica…"/></div>
+        <div class="field"><label>Telefone</label><input type="tel" id="colab-tel" placeholder="(11) 99999-9999"/></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Diária Base (R$)</label><input type="number" id="colab-diaria" placeholder="0,00" step="0.01" min="0" /></div>
+        <div class="field"><label>Diária Base (R$)</label><input type="number" id="colab-diaria" placeholder="0,00" step="0.01" min="0"/></div>
         <div class="field"><label>Status</label>
-          <select id="colab-status">
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
-          </select>
+          <select id="colab-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
         </div>
       </div>
       <div class="field"><label>Observações</label><textarea id="colab-obs" placeholder="Especialidades, documentos, etc."></textarea></div>
@@ -596,7 +518,7 @@
   </div>
 </div>
 
-<!-- Modal Nova Diária -->
+<!-- MODAL DIÁRIA -->
 <div class="modal-backdrop" id="modal-diaria">
   <div class="modal">
     <div class="modal-header">
@@ -604,29 +526,17 @@
       <button class="modal-close" onclick="closeModal('modal-diaria')"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
-      <input type="hidden" id="diaria-edit-id" />
-      <div class="field"><label>Colaborador *</label>
-        <select id="diaria-colab">
-          <option value="">Selecione…</option>
-        </select>
-      </div>
-      <div class="field"><label>Obra *</label>
-        <select id="diaria-obra">
-          <option value="">Selecione…</option>
-        </select>
-      </div>
+      <input type="hidden" id="diaria-edit-id"/>
+      <div class="field"><label>Colaborador *</label><select id="diaria-colab"><option value="">Selecione…</option></select></div>
+      <div class="field"><label>Obra *</label><select id="diaria-obra"><option value="">Selecione…</option></select></div>
       <div class="field-row">
-        <div class="field"><label>Data *</label><input type="date" id="diaria-data" /></div>
-        <div class="field"><label>Valor (R$) *</label><input type="number" id="diaria-valor" placeholder="0,00" step="0.01" min="0" /></div>
+        <div class="field"><label>Data *</label><input type="date" id="diaria-data"/></div>
+        <div class="field"><label>Valor (R$) *</label><input type="number" id="diaria-valor" placeholder="0,00" step="0.01" min="0"/></div>
       </div>
-      <div class="field">
-        <label>Status Pagamento</label>
-        <select id="diaria-pago">
-          <option value="pendente">Pendente</option>
-          <option value="pago">Pago</option>
-        </select>
+      <div class="field"><label>Status Pagamento</label>
+        <select id="diaria-pago"><option value="pendente">Pendente</option><option value="pago">Pago</option></select>
       </div>
-      <div class="field"><label>Observações</label><input type="text" id="diaria-obs" placeholder="Ajuste, serviço extra, etc." /></div>
+      <div class="field"><label>Observações</label><input type="text" id="diaria-obs" placeholder="Ajuste, serviço extra, etc."/></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-diaria')">Cancelar</button>
@@ -635,7 +545,41 @@
   </div>
 </div>
 
-<!-- Modal Confirmar Delete -->
+<!-- MODAL USUÁRIO -->
+<div class="modal-backdrop" id="modal-user">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-user-title">Novo Usuário</h2>
+      <button class="modal-close" onclick="closeModal('modal-user')"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="user-edit-id"/>
+      <div class="field"><label>Nome Completo *</label><input type="text" id="user-nome" placeholder="Nome do gestor"/></div>
+      <div class="field-row">
+        <div class="field"><label>Login (usuário) *</label><input type="text" id="user-login" placeholder="sem espaços"/></div>
+        <div class="field"><label>Senha *</label><input type="password" id="user-senha" placeholder="mínimo 4 caracteres"/></div>
+      </div>
+      <div class="field"><label>Perfil</label>
+        <select id="user-perfil">
+          <option value="gestor">Gestor</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+      <div class="field"><label>Status</label>
+        <select id="user-status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
+      </div>
+      <div id="user-edit-pass-wrap" style="display:none;">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Deixe a senha em branco para manter a atual.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-user')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarUser()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR DELETE -->
 <div class="modal-backdrop" id="modal-confirm">
   <div class="modal" style="max-width:360px;">
     <div class="modal-header"><h2>Confirmar Exclusão</h2></div>
@@ -648,128 +592,129 @@
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-//  CONFIG — preencha com seus dados do Supabase
-// ─────────────────────────────────────────────
-const DEFAULT_SB_URL = 'https://vcgvupyxxmtftookryli.supabase.co';
-const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjZ3Z1cHl4eG10ZnRvb2tyeWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyNzU2MzAsImV4cCI6MjA5OTg1MTYzMH0.7duYp3Rxqd3phyC_MTUkXCiWUx22wpeuckFtAnYypWQ';
+// ─── CONFIG ──────────────────────────────────
+const SB_URL = 'https://vcgvupyxxmtftookryli.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjZ3Z1cHl4eG10ZnRvb2tyeWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyNzU2MzAsImV4cCI6MjA5OTg1MTYzMH0.7duYp3Rxqd3phyC_MTUkXCiWUx22wpeuckFtAnYypWQ';
+const sb = supabase.createClient(SB_URL, SB_KEY);
 
-const ADMIN_USER = 'admin';
+// ─── ESTADO ──────────────────────────────────
+let currentUser = null; // { id, nome, login, perfil }
+let colabs = [], obras = [], diarias = [], usuarios = [];
+let selectedMonth = null;
 
-// ─── INIT ───────────────────────────────────
-let sb;
-let adminPass = localStorage.getItem('arr_admin_pass') || 'admin';
-
-function getSbConfig() {
-  return {
-    url: localStorage.getItem('arr_sb_url') || DEFAULT_SB_URL,
-    key: localStorage.getItem('arr_sb_key') || DEFAULT_SB_KEY,
-  };
-}
-
-function initSupabase() {
-  const { url, key } = getSbConfig();
-  if (!url || url === 'SUPABASE_URL_AQUI' || !key || key === 'SUPABASE_ANON_KEY_AQUI') {
-    return false;
-  }
-  try {
-    sb = supabase.createClient(url, key);
-    return true;
-  } catch(e) { return false; }
-}
-
+// ─── BOOT ────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  // greeting
   const h = new Date().getHours();
-  const g = h < 12 ? 'Bom dia! 👷' : h < 18 ? 'Boa tarde! 👷' : 'Boa noite! 👷';
-  document.getElementById('dash-greeting').textContent = g;
-
-  // relatório – ano e mês correntes
+  document.getElementById('dash-greeting').textContent = (h<12?'Bom dia':'h<18?Boa tarde':'Boa noite') + '! 👷';
   const now = new Date();
   document.getElementById('rel-ano').value = now.getFullYear();
   document.getElementById('rel-mes').value = now.getMonth();
 
-  // conectar supabase
-  initSupabase();
-  await new Promise(r => setTimeout(r, 900));
+  await new Promise(r => setTimeout(r, 800));
   document.getElementById('app-loading').style.display = 'none';
 
-  const logged = sessionStorage.getItem('arr_logged');
-  if (logged) {
+  const saved = sessionStorage.getItem('arr_user');
+  if (saved) {
+    currentUser = JSON.parse(saved);
     showApp();
   } else {
     showLogin();
   }
 });
 
-function showLogin() {
-  document.getElementById('login-screen').style.display = 'flex';
-}
-
-function showApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  loadAll();
-}
-
 // ─── LOGIN ───────────────────────────────────
-function doLogin() {
-  const u = document.getElementById('login-user').value.trim();
-  const p = document.getElementById('login-pass').value;
+function showLogin() { document.getElementById('login-screen').style.display = 'flex'; }
+
+async function doLogin() {
+  const login = document.getElementById('login-user').value.trim();
+  const senha = document.getElementById('login-pass').value;
   const errEl = document.getElementById('login-error');
-  if (u === ADMIN_USER && p === adminPass) {
-    errEl.style.display = 'none';
-    sessionStorage.setItem('arr_logged', '1');
-    showApp();
-  } else {
-    errEl.style.display = 'block';
-  }
+  if (!login || !senha) { errEl.style.display = 'block'; errEl.textContent = 'Preencha usuário e senha.'; return; }
+
+  const { data, error } = await sb.from('usuarios').select('*').eq('login', login).eq('status', 'ativo').single();
+  if (error || !data) { errEl.style.display = 'block'; errEl.textContent = 'Usuário não encontrado ou inativo.'; return; }
+
+  const senhaCorreta = data.senha === senha;
+  if (!senhaCorreta) { errEl.style.display = 'block'; errEl.textContent = 'Senha incorreta.'; return; }
+
+  errEl.style.display = 'none';
+  currentUser = { id: data.id, nome: data.nome, login: data.login, perfil: data.perfil };
+  sessionStorage.setItem('arr_user', JSON.stringify(currentUser));
+  showApp();
 }
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
 });
 
 function doLogout() {
-  sessionStorage.removeItem('arr_logged');
+  sessionStorage.removeItem('arr_user');
+  currentUser = null;
   document.getElementById('app').style.display = 'none';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
   showLogin();
 }
 
-// ─── NAVIGATION ─────────────────────────────
-function navigate(page) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('sec-' + page).classList.add('active');
-  const el = document.getElementById('nav-' + page);
-  if (el) el.classList.add('active');
-  const mel = document.getElementById('mnav-' + page);
-  if (mel) mel.classList.add('active');
+// ─── SHOW APP ────────────────────────────────
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('topbar-username').textContent = currentUser.nome + (currentUser.perfil === 'admin' ? ' · Admin' : '');
 
-  if (page === 'obras')         loadObras();
-  if (page === 'colaboradores') loadColabs();
-  if (page === 'diarias')       loadDiarias();
-  if (page === 'relatorio')     loadRelatorio();
+  const isAdmin = currentUser.perfil === 'admin';
+  // mostrar itens admin-only
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+
+  const h = new Date().getHours();
+  document.getElementById('dash-greeting').textContent = (h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + currentUser.nome.split(' ')[0] + '! 👷';
+
+  loadAll();
 }
 
 // ─── DATA ────────────────────────────────────
-let colabs = [], obras = [], diarias = [];
-
 async function loadAll() {
-  await Promise.all([fetchColabs(), fetchObras(), fetchDiarias()]);
+  await Promise.all([fetchColabs(), fetchObras(), fetchDiarias(), fetchUsuarios()]);
   renderDashboard();
+  populateUserFilters();
 }
 
 async function fetchColabs() {
-  const { data, error } = await sb.from('colaboradores').select('*').order('nome');
-  if (!error) colabs = data || [];
+  const { data } = await sb.from('colaboradores').select('*').order('nome');
+  colabs = data || [];
 }
 async function fetchObras() {
-  const { data, error } = await sb.from('obras').select('*').order('created_at', { ascending: false });
-  if (!error) obras = data || [];
+  const { data } = await sb.from('obras').select('*').order('created_at', { ascending: false });
+  obras = data || [];
 }
 async function fetchDiarias() {
-  const { data, error } = await sb.from('diarias').select('*').order('data', { ascending: false });
-  if (!error) diarias = data || [];
+  const { data } = await sb.from('diarias').select('*').order('data', { ascending: false });
+  diarias = data || [];
+}
+async function fetchUsuarios() {
+  const { data } = await sb.from('usuarios').select('id,nome,login,perfil,status').order('nome');
+  usuarios = data || [];
+}
+
+// ─── FILTROS DE USUÁRIO ───────────────────────
+function populateUserFilters() {
+  if (currentUser.perfil !== 'admin') return;
+  const opts = '<option value="">Todos</option>' + usuarios.map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
+  ['dash-filter-user','diaria-filter-user','rel-filter-user'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
+
+function getFilteredDiarias(filterElId) {
+  let data = [...diarias];
+  if (currentUser.perfil === 'admin' && filterElId) {
+    const uid = document.getElementById(filterElId)?.value;
+    if (uid) data = data.filter(d => String(d.usuario_id) === String(uid));
+  } else if (currentUser.perfil !== 'admin') {
+    data = data.filter(d => String(d.usuario_id) === String(currentUser.id));
+  }
+  return data;
 }
 
 // ─── DASHBOARD ───────────────────────────────
@@ -778,26 +723,28 @@ function renderDashboard() {
   const mes = now.getMonth(), ano = now.getFullYear();
   const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
+  const diariasFiltradas = getFilteredDiarias('dash-filter-user');
+  const diariasMes = diariasFiltradas.filter(d => {
+    const dt = new Date(d.data + 'T00:00:00');
+    return dt.getMonth() === mes && dt.getFullYear() === ano;
+  });
+
   const colabsAtivos = colabs.filter(c => c.status === 'ativo').length;
   const obrasAtivas  = obras.filter(o => o.status === 'em_andamento').length;
-
-  const diariasMes = diarias.filter(d => {
-    const dd = new Date(d.data + 'T00:00:00');
-    return dd.getMonth() === mes && dd.getFullYear() === ano;
-  });
   const totalMes = diariasMes.reduce((s, d) => s + parseFloat(d.valor || 0), 0);
 
   document.getElementById('stat-colab').textContent = colabsAtivos;
   document.getElementById('stat-obras').textContent = obrasAtivas;
   document.getElementById('stat-diarias-mes').textContent = diariasMes.length;
   document.getElementById('stat-diarias-mes-label').textContent = MESES[mes] + '/' + ano;
-  document.getElementById('stat-total').textContent = 'R$ ' + totalMes.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('stat-total').textContent = 'R$ ' + totalMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  // últimas 8 diárias
-  const ultimas = diarias.slice(0, 8);
+  const ultimas = diariasFiltradas.slice(0, 8);
   const container = document.getElementById('dash-ultimas');
-  if (ultimas.length === 0) {
-    container.innerHTML = '<div class="empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>Nenhuma diária registrada ainda</p><small>Clique em "Registrar Diária" para começar</small></div>';
+  const isAdmin = currentUser.perfil === 'admin';
+
+  if (!ultimas.length) {
+    container.innerHTML = '<div class="empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg><p>Nenhuma diária registrada ainda</p></div>';
     return;
   }
   container.innerHTML = `<table style="width:100%;border-collapse:collapse;">
@@ -805,17 +752,20 @@ function renderDashboard() {
       <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Data</th>
       <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Colaborador</th>
       <th class="hide-mobile" style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Obra</th>
+      ${isAdmin ? '<th class="hide-mobile" style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Por</th>' : ''}
       <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Valor</th>
       <th style="padding:10px 16px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg);">Status</th>
     </tr></thead><tbody>` +
     ultimas.map(d => {
       const c = colabs.find(x => x.id === d.colaborador_id);
       const o = obras.find(x => x.id === d.obra_id);
+      const u = usuarios.find(x => x.id === d.usuario_id);
       const dt = new Date(d.data + 'T00:00:00');
       return `<tr>
         <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);">${dt.toLocaleDateString('pt-BR')}</td>
         <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);font-weight:500;">${c ? c.nome : '–'}</td>
         <td class="hide-mobile" style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);">${o ? o.nome : '–'}</td>
+        ${isAdmin ? `<td class="hide-mobile" style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);"><span class="badge badge-purple">${u ? u.nome.split(' ')[0] : '–'}</span></td>` : ''}
         <td style="padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);font-weight:600;color:var(--orange2);">R$ ${parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
         <td style="padding:12px 16px;border-bottom:1px solid var(--border);">${d.pago === 'pago' ? '<span class="badge badge-green">Pago</span>' : '<span class="badge badge-yellow">Pendente</span>'}</td>
       </tr>`;
@@ -823,48 +773,35 @@ function renderDashboard() {
 }
 
 // ─── OBRAS ───────────────────────────────────
-function loadObras() {
-  fetchObras().then(renderObras);
-}
+function loadObras() { fetchObras().then(renderObras); }
 function renderObras() {
   const c = document.getElementById('obras-list');
-  if (obras.length === 0) {
-    c.innerHTML = '<div class="empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><p>Nenhuma obra cadastrada</p></div>';
-    return;
-  }
-  const STATUS_LABEL = { em_andamento:'Em Andamento', concluida:'Concluída', pausada:'Pausada', orcamento:'Orçamento' };
-  const STATUS_BADGE = { em_andamento:'badge-green', concluida:'badge-blue', pausada:'badge-yellow', orcamento:'badge-gray' };
+  if (!obras.length) { c.innerHTML = '<div class="empty"><p>Nenhuma obra cadastrada</p></div>'; return; }
+  const SL = { em_andamento:'Em Andamento', concluida:'Concluída', pausada:'Pausada', orcamento:'Orçamento' };
+  const SB = { em_andamento:'badge-green', concluida:'badge-blue', pausada:'badge-yellow', orcamento:'badge-gray' };
   c.innerHTML = obras.map(o => `
     <div class="obra-card">
       <div class="obra-card-header">
-        <div>
-          <h3>${o.nome}</h3>
-          ${o.cliente ? `<p>👤 ${o.cliente}</p>` : ''}
-          ${o.endereco ? `<p>📍 ${o.endereco}</p>` : ''}
-        </div>
-        <span class="badge ${STATUS_BADGE[o.status] || 'badge-gray'}">${STATUS_LABEL[o.status] || o.status}</span>
+        <div><h3>${o.nome}</h3>${o.cliente?`<p style="font-size:12px;color:var(--muted);margin-top:4px;">👤 ${o.cliente}</p>`:''} ${o.endereco?`<p style="font-size:12px;color:var(--muted);">📍 ${o.endereco}</p>`:''}</div>
+        <span class="badge ${SB[o.status]||'badge-gray'}">${SL[o.status]||o.status}</span>
       </div>
-      ${o.obs ? `<p style="font-size:12px;color:var(--muted);margin-top:8px;">${o.obs}</p>` : ''}
       <div class="obra-card-footer">
-        ${o.data_inicio ? `<span style="font-size:11px;color:var(--muted);">Início: ${new Date(o.data_inicio+'T00:00:00').toLocaleDateString('pt-BR')}</span>` : ''}
-        ${o.data_fim ? `<span style="font-size:11px;color:var(--muted);">Prev. Fim: ${new Date(o.data_fim+'T00:00:00').toLocaleDateString('pt-BR')}</span>` : ''}
+        ${o.data_inicio?`<span style="font-size:11px;color:var(--muted);">Início: ${new Date(o.data_inicio+'T00:00:00').toLocaleDateString('pt-BR')}</span>`:''}
         <div style="margin-left:auto;display:flex;gap:8px;">
           <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="editObra(${o.id})">Editar</button>
-          <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="confirmDelete('obra',${o.id},'${escHtml(o.nome)}')">Excluir</button>
+          <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="confirmDelete('obra',${o.id},'${esc(o.nome)}')">Excluir</button>
         </div>
       </div>
     </div>`).join('');
 }
-
-function openObraModal(id) {
-  clearModal('modal-obra', ['obra-nome','obra-cliente','obra-endereco','obra-inicio','obra-fim','obra-obs','obra-edit-id']);
+function openObraModal() {
+  ['obra-nome','obra-cliente','obra-endereco','obra-inicio','obra-fim','obra-obs','obra-edit-id'].forEach(f => { const e=document.getElementById(f); if(e)e.value=''; });
   document.getElementById('modal-obra-title').textContent = 'Nova Obra';
   document.getElementById('obra-status').value = 'em_andamento';
   openModal('modal-obra');
 }
 function editObra(id) {
-  const o = obras.find(x => x.id === id);
-  if (!o) return;
+  const o = obras.find(x => x.id === id); if (!o) return;
   document.getElementById('modal-obra-title').textContent = 'Editar Obra';
   document.getElementById('obra-edit-id').value = id;
   document.getElementById('obra-nome').value = o.nome || '';
@@ -877,384 +814,328 @@ function editObra(id) {
   openModal('modal-obra');
 }
 async function salvarObra() {
-  const nome = document.getElementById('obra-nome').value.trim();
-  if (!nome) { showToast('Informe o nome da obra'); return; }
-  const payload = {
-    nome, cliente: v('obra-cliente'), endereco: v('obra-endereco'),
-    data_inicio: v('obra-inicio') || null, data_fim: v('obra-fim') || null,
-    status: v('obra-status'), obs: v('obra-obs'),
-  };
+  const nome = v('obra-nome'); if (!nome) { showToast('Informe o nome da obra'); return; }
+  const payload = { nome, cliente:v('obra-cliente'), endereco:v('obra-endereco'), data_inicio:v('obra-inicio')||null, data_fim:v('obra-fim')||null, status:v('obra-status'), obs:v('obra-obs') };
   const editId = v('obra-edit-id');
-  let err;
-  if (editId) {
-    ({ error: err } = await sb.from('obras').update(payload).eq('id', editId));
-  } else {
-    ({ error: err } = await sb.from('obras').insert(payload));
-  }
-  if (err) { showToast('Erro: ' + err.message); return; }
-  closeModal('modal-obra');
-  showToast(editId ? 'Obra atualizada!' : 'Obra cadastrada!');
+  const { error } = editId ? await sb.from('obras').update(payload).eq('id',editId) : await sb.from('obras').insert(payload);
+  if (error) { showToast('Erro: '+error.message); return; }
+  closeModal('modal-obra'); showToast(editId?'Obra atualizada!':'Obra cadastrada!');
   await fetchObras(); renderObras();
 }
 
 // ─── COLABORADORES ───────────────────────────
-function loadColabs() {
-  fetchColabs().then(renderColabs);
-}
-let colabsFiltered = [];
+function loadColabs() { fetchColabs().then(() => renderColabs()); }
 function renderColabs(list) {
   const data = list || colabs;
-  colabsFiltered = data;
-  // desktop
   const tbody = document.getElementById('colab-tbody');
-  if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted);">Nenhum colaborador encontrado</td></tr>';
-  } else {
-    tbody.innerHTML = data.map(c => `
-      <tr>
-        <td style="font-weight:500;">${c.nome}</td>
-        <td>${c.funcao || '–'}</td>
-        <td style="font-weight:600;color:var(--orange2);">R$ ${parseFloat(c.diaria_base||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td>${c.status === 'ativo' ? '<span class="badge badge-green">Ativo</span>' : '<span class="badge badge-gray">Inativo</span>'}</td>
-        <td>
-          <button class="btn btn-secondary" style="padding:5px 11px;font-size:12px;" onclick="editColab(${c.id})">Editar</button>
-          <button class="btn btn-danger" style="padding:5px 11px;font-size:12px;margin-left:4px;" onclick="confirmDelete('colab',${c.id},'${escHtml(c.nome)}')">Excluir</button>
-        </td>
-      </tr>`).join('');
-  }
-  // mobile
-  const cards = document.getElementById('colab-cards');
-  cards.innerHTML = data.map(c => `
+  tbody.innerHTML = data.length ? data.map(c => `
+    <tr>
+      <td style="font-weight:500;">${c.nome}</td>
+      <td>${c.funcao||'–'}</td>
+      <td style="font-weight:600;color:var(--orange2);">R$ ${parseFloat(c.diaria_base||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      <td>${c.status==='ativo'?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-gray">Inativo</span>'}</td>
+      <td>
+        <button class="btn btn-secondary" style="padding:5px 11px;font-size:12px;" onclick="editColab(${c.id})">Editar</button>
+        <button class="btn btn-danger" style="padding:5px 11px;font-size:12px;margin-left:4px;" onclick="confirmDelete('colab',${c.id},'${esc(c.nome)}')">Excluir</button>
+      </td>
+    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted);">Nenhum colaborador</td></tr>';
+
+  document.getElementById('colab-cards').innerHTML = data.map(c => `
     <div class="colab-card">
       <div class="colab-avatar">${c.nome.charAt(0).toUpperCase()}</div>
-      <div class="colab-info">
-        <h3>${c.nome}</h3>
-        <p>${c.funcao || 'Sem função'} · ${c.status === 'ativo' ? '✅ Ativo' : '⛔ Inativo'}</p>
-      </div>
-      <div>
-        <div class="colab-valor">R$ ${parseFloat(c.diaria_base||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      <div class="colab-info"><h3>${c.nome}</h3><p>${c.funcao||'Sem função'} · ${c.status==='ativo'?'✅ Ativo':'⛔ Inativo'}</p></div>
+      <div style="text-align:right;">
+        <div style="font-size:13px;font-weight:700;color:var(--orange2);">R$ ${parseFloat(c.diaria_base||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
         <button class="btn btn-secondary" style="padding:5px 11px;font-size:11px;margin-top:6px;" onclick="editColab(${c.id})">Editar</button>
       </div>
     </div>`).join('') || '<div class="empty"><p>Nenhum colaborador</p></div>';
 }
 function filterColabs(q) {
-  const f = colabs.filter(c => c.nome.toLowerCase().includes(q.toLowerCase()) || (c.funcao||'').toLowerCase().includes(q.toLowerCase()));
-  renderColabs(f);
+  renderColabs(colabs.filter(c => c.nome.toLowerCase().includes(q.toLowerCase()) || (c.funcao||'').toLowerCase().includes(q.toLowerCase())));
 }
 function openColabModal() {
-  clearModal('modal-colab', ['colab-nome','colab-funcao','colab-tel','colab-diaria','colab-obs','colab-edit-id']);
-  document.getElementById('modal-colab-title').textContent = 'Novo Colaborador';
-  document.getElementById('colab-status').value = 'ativo';
+  ['colab-nome','colab-funcao','colab-tel','colab-diaria','colab-obs','colab-edit-id'].forEach(f=>{const e=document.getElementById(f);if(e)e.value='';});
+  document.getElementById('modal-colab-title').textContent='Novo Colaborador';
+  document.getElementById('colab-status').value='ativo';
   openModal('modal-colab');
 }
 function editColab(id) {
-  const c = colabs.find(x => x.id === id);
-  if (!c) return;
-  document.getElementById('modal-colab-title').textContent = 'Editar Colaborador';
-  document.getElementById('colab-edit-id').value = id;
-  document.getElementById('colab-nome').value = c.nome || '';
-  document.getElementById('colab-funcao').value = c.funcao || '';
-  document.getElementById('colab-tel').value = c.telefone || '';
-  document.getElementById('colab-diaria').value = c.diaria_base || '';
-  document.getElementById('colab-status').value = c.status || 'ativo';
-  document.getElementById('colab-obs').value = c.obs || '';
+  const c = colabs.find(x=>x.id===id); if(!c)return;
+  document.getElementById('modal-colab-title').textContent='Editar Colaborador';
+  document.getElementById('colab-edit-id').value=id;
+  document.getElementById('colab-nome').value=c.nome||'';
+  document.getElementById('colab-funcao').value=c.funcao||'';
+  document.getElementById('colab-tel').value=c.telefone||'';
+  document.getElementById('colab-diaria').value=c.diaria_base||'';
+  document.getElementById('colab-status').value=c.status||'ativo';
+  document.getElementById('colab-obs').value=c.obs||'';
   openModal('modal-colab');
 }
 async function salvarColab() {
-  const nome = document.getElementById('colab-nome').value.trim();
-  if (!nome) { showToast('Informe o nome'); return; }
-  const payload = {
-    nome, funcao: v('colab-funcao'), telefone: v('colab-tel'),
-    diaria_base: parseFloat(v('colab-diaria')) || 0,
-    status: v('colab-status'), obs: v('colab-obs'),
-  };
+  const nome = v('colab-nome'); if(!nome){showToast('Informe o nome');return;}
+  const payload = {nome, funcao:v('colab-funcao'), telefone:v('colab-tel'), diaria_base:parseFloat(v('colab-diaria'))||0, status:v('colab-status'), obs:v('colab-obs')};
   const editId = v('colab-edit-id');
-  let err;
-  if (editId) {
-    ({ error: err } = await sb.from('colaboradores').update(payload).eq('id', editId));
-  } else {
-    ({ error: err } = await sb.from('colaboradores').insert(payload));
-  }
-  if (err) { showToast('Erro: ' + err.message); return; }
-  closeModal('modal-colab');
-  showToast(editId ? 'Colaborador atualizado!' : 'Colaborador cadastrado!');
+  const {error} = editId ? await sb.from('colaboradores').update(payload).eq('id',editId) : await sb.from('colaboradores').insert(payload);
+  if(error){showToast('Erro: '+error.message);return;}
+  closeModal('modal-colab'); showToast(editId?'Colaborador atualizado!':'Colaborador cadastrado!');
   await fetchColabs(); renderColabs();
 }
 
 // ─── DIÁRIAS ─────────────────────────────────
-let selectedMonth = null;
-let diariasFiltro = [];
-
 function loadDiarias() {
-  fetchDiarias().then(() => {
-    buildMonthFilter();
-    renderDiarias();
-  });
+  fetchDiarias().then(() => { buildMonthFilter(); renderDiarias(); });
 }
-
 function buildMonthFilter() {
   const months = new Set();
-  diarias.forEach(d => {
-    const dt = new Date(d.data + 'T00:00:00');
+  const diariasFiltradas = getFilteredDiarias('diaria-filter-user');
+  diariasFiltradas.forEach(d => {
+    const dt = new Date(d.data+'T00:00:00');
     months.add(`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`);
   });
   const sorted = [...months].sort().reverse();
   const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const container = document.getElementById('diaria-month-filter');
-  if (!selectedMonth && sorted.length > 0) selectedMonth = sorted[0];
-  container.innerHTML = '<div class="month-chip ' + (!selectedMonth ? 'active' : '') + '" onclick="selectMonth(null)">Todos</div>' +
-    sorted.map(m => {
-      const [y, mo] = m.split('-');
-      return `<div class="month-chip ${selectedMonth===m?'active':''}" onclick="selectMonth('${m}')">${MESES[parseInt(mo)-1]}/${y}</div>`;
-    }).join('');
+  if (!selectedMonth && sorted.length) selectedMonth = sorted[0];
+  document.getElementById('diaria-month-filter').innerHTML =
+    `<div class="month-chip ${!selectedMonth?'active':''}" onclick="selectMonth(null)">Todos</div>` +
+    sorted.map(m => { const [y,mo]=m.split('-'); return `<div class="month-chip ${selectedMonth===m?'active':''}" onclick="selectMonth('${m}')">${MESES[parseInt(mo)-1]}/${y}</div>`; }).join('');
 }
-
-function selectMonth(m) {
-  selectedMonth = m;
-  buildMonthFilter();
-  renderDiarias();
-}
+function selectMonth(m) { selectedMonth=m; buildMonthFilter(); renderDiarias(); }
 
 function renderDiarias(list) {
-  let data = list !== undefined ? list : diarias;
+  let data = list !== undefined ? list : getFilteredDiarias('diaria-filter-user');
   if (selectedMonth) {
     data = data.filter(d => {
-      const dt = new Date(d.data + 'T00:00:00');
-      const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
-      return key === selectedMonth;
+      const dt = new Date(d.data+'T00:00:00');
+      return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}` === selectedMonth;
     });
   }
-  diariasFiltro = data;
-  const total = data.reduce((s,d) => s + parseFloat(d.valor||0), 0);
+  const total = data.reduce((s,d)=>s+parseFloat(d.valor||0),0);
   document.getElementById('diaria-total-label').textContent = data.length ? `Total: R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}` : '';
+  const isAdmin = currentUser.perfil === 'admin';
+  const MESES_PT=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
   const tbody = document.getElementById('diaria-tbody');
-  const cards  = document.getElementById('diaria-cards');
-  if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted);">Nenhuma diária neste período</td></tr>';
-    cards.innerHTML = '<div class="empty"><p>Nenhuma diária</p></div>';
-    return;
-  }
-  const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  tbody.innerHTML = data.map(d => {
-    const c = colabs.find(x => x.id === d.colaborador_id);
-    const o = obras.find(x => x.id === d.obra_id);
-    const dt = new Date(d.data + 'T00:00:00');
+  tbody.innerHTML = data.length ? data.map(d => {
+    const c=colabs.find(x=>x.id===d.colaborador_id);
+    const o=obras.find(x=>x.id===d.obra_id);
+    const u=usuarios.find(x=>x.id===d.usuario_id);
+    const dt=new Date(d.data+'T00:00:00');
     return `<tr>
       <td>${dt.toLocaleDateString('pt-BR')}</td>
-      <td style="font-weight:500;">${c ? c.nome : '–'}</td>
-      <td class="hide-mobile">${o ? o.nome : '–'}</td>
+      <td style="font-weight:500;">${c?c.nome:'–'}</td>
+      <td class="hide-mobile">${o?o.nome:'–'}</td>
+      ${isAdmin?`<td class="hide-mobile"><span class="badge badge-purple">${u?u.nome.split(' ')[0]:'–'}</span></td>`:''}
       <td style="font-weight:600;color:var(--orange2);">R$ ${parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-      <td class="hide-mobile">${d.obs || '–'}</td>
+      <td>${d.pago==='pago'?'<span class="badge badge-green">Pago</span>':'<span class="badge badge-yellow">Pendente</span>'}</td>
       <td>
-        ${d.pago !== 'pago' ? `<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="marcarPago(${d.id})">✔ Pagar</button>` : '<span class="badge badge-green">Pago</span>'}
-        <button class="btn btn-danger" style="padding:4px 10px;font-size:11px;margin-left:4px;" onclick="confirmDelete('diaria',${d.id},'diária de ${escHtml(c?c.nome:'')}')">✕</button>
+        ${d.pago!=='pago'?`<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="marcarPago(${d.id})">✔ Pagar</button>`:''}
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:11px;margin-left:4px;" onclick="confirmDelete('diaria',${d.id},'diária de ${esc(c?c.nome:'')}')">✕</button>
       </td>
     </tr>`;
-  }).join('');
+  }).join('') : `<tr><td colspan="${isAdmin?7:6}" style="text-align:center;padding:32px;color:var(--muted);">Nenhuma diária neste período</td></tr>`;
 
-  cards.innerHTML = data.map(d => {
-    const c = colabs.find(x => x.id === d.colaborador_id);
-    const o = obras.find(x => x.id === d.obra_id);
-    const dt = new Date(d.data + 'T00:00:00');
+  document.getElementById('diaria-cards').innerHTML = data.length ? data.map(d => {
+    const c=colabs.find(x=>x.id===d.colaborador_id);
+    const o=obras.find(x=>x.id===d.obra_id);
+    const dt=new Date(d.data+'T00:00:00');
     return `<div class="diaria-item">
       <div class="diaria-date">${dt.getDate()} <small>${MESES_PT[dt.getMonth()]}</small></div>
-      <div class="diaria-info">
-        <h4>${c ? c.nome : '–'}</h4>
-        <p>${o ? o.nome : '–'}</p>
-      </div>
+      <div class="diaria-info"><h4>${c?c.nome:'–'}</h4><p>${o?o.nome:'–'}</p></div>
       <div style="text-align:right;">
-        <div class="diaria-valor">R$ ${parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-        ${d.pago !== 'pago' ? `<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;margin-top:4px;" onclick="marcarPago(${d.id})">Pagar</button>` : '<span class="badge badge-green" style="margin-top:4px;">Pago</span>'}
+        <div style="font-size:14px;font-weight:700;color:var(--orange2);">R$ ${parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        ${d.pago!=='pago'?`<button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;margin-top:4px;" onclick="marcarPago(${d.id})">Pagar</button>`:'<span class="badge badge-green" style="margin-top:4px;">Pago</span>'}
       </div>
     </div>`;
-  }).join('');
+  }).join('') : '<div class="empty"><p>Nenhuma diária</p></div>';
 }
 
 function filterDiarias(q) {
   if (!q) { renderDiarias(); return; }
-  const f = diarias.filter(d => {
-    const c = colabs.find(x => x.id === d.colaborador_id);
-    const o = obras.find(x => x.id === d.obra_id);
+  const base = getFilteredDiarias('diaria-filter-user');
+  renderDiarias(base.filter(d => {
+    const c=colabs.find(x=>x.id===d.colaborador_id);
+    const o=obras.find(x=>x.id===d.obra_id);
     return (c?.nome||'').toLowerCase().includes(q.toLowerCase()) || (o?.nome||'').toLowerCase().includes(q.toLowerCase());
-  });
-  renderDiarias(f);
+  }));
 }
 
 function openNovaDiariaModal() {
-  clearModal('modal-diaria', ['diaria-obs','diaria-valor','diaria-edit-id']);
-  document.getElementById('modal-diaria-title').textContent = 'Registrar Diária';
+  ['diaria-obs','diaria-valor','diaria-edit-id'].forEach(f=>{const e=document.getElementById(f);if(e)e.value='';});
   document.getElementById('diaria-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('diaria-pago').value = 'pendente';
-
-  // preenche selects
   const selC = document.getElementById('diaria-colab');
   selC.innerHTML = '<option value="">Selecione…</option>' + colabs.filter(c=>c.status==='ativo').map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
   const selO = document.getElementById('diaria-obra');
   selO.innerHTML = '<option value="">Selecione…</option>' + obras.filter(o=>o.status==='em_andamento').map(o=>`<option value="${o.id}">${o.nome}</option>`).join('');
-
-  // auto-preenche valor ao selecionar colaborador
-  selC.onchange = () => {
-    const c = colabs.find(x => x.id == selC.value);
-    if (c) document.getElementById('diaria-valor').value = c.diaria_base || '';
-  };
-
+  selC.onchange = () => { const c=colabs.find(x=>x.id==selC.value); if(c) document.getElementById('diaria-valor').value=c.diaria_base||''; };
   openModal('modal-diaria');
 }
 
 async function salvarDiaria() {
-  const colaborador_id = v('diaria-colab');
-  const obra_id = v('diaria-obra');
-  const data = v('diaria-data');
-  const valor = v('diaria-valor');
-  if (!colaborador_id || !obra_id || !data || !valor) { showToast('Preencha todos os campos obrigatórios'); return; }
-  const payload = {
-    colaborador_id: parseInt(colaborador_id),
-    obra_id: parseInt(obra_id),
-    data, valor: parseFloat(valor),
-    pago: v('diaria-pago'),
-    obs: v('diaria-obs'),
-  };
-  const { error } = await sb.from('diarias').insert(payload);
-  if (error) { showToast('Erro: ' + error.message); return; }
-  closeModal('modal-diaria');
-  showToast('Diária registrada!');
-  await fetchDiarias();
-  buildMonthFilter();
-  renderDiarias();
-  renderDashboard();
+  const colaborador_id=v('diaria-colab'), obra_id=v('diaria-obra'), data=v('diaria-data'), valor=v('diaria-valor');
+  if (!colaborador_id||!obra_id||!data||!valor) { showToast('Preencha todos os campos obrigatórios'); return; }
+  const payload = { colaborador_id:parseInt(colaborador_id), obra_id:parseInt(obra_id), data, valor:parseFloat(valor), pago:v('diaria-pago'), obs:v('diaria-obs'), usuario_id:currentUser.id };
+  const {error} = await sb.from('diarias').insert(payload);
+  if (error) { showToast('Erro: '+error.message); return; }
+  closeModal('modal-diaria'); showToast('Diária registrada!');
+  await fetchDiarias(); buildMonthFilter(); renderDiarias(); renderDashboard();
 }
 
 async function marcarPago(id) {
-  const { error } = await sb.from('diarias').update({ pago: 'pago' }).eq('id', id);
+  const {error} = await sb.from('diarias').update({pago:'pago'}).eq('id',id);
   if (error) { showToast('Erro'); return; }
   showToast('Marcado como pago!');
-  await fetchDiarias();
-  renderDiarias();
-  renderDashboard();
+  await fetchDiarias(); renderDiarias(); renderDashboard();
 }
 
 // ─── RELATÓRIO ───────────────────────────────
 async function loadRelatorio() {
-  const mes = parseInt(document.getElementById('rel-mes').value);
-  const ano = parseInt(document.getElementById('rel-ano').value);
-  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-
+  const mes = parseInt(v('rel-mes')), ano = parseInt(document.getElementById('rel-ano').value);
+  const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   await fetchDiarias();
-  await fetchColabs();
-
-  const diariasMes = diarias.filter(d => {
-    const dt = new Date(d.data + 'T00:00:00');
-    return dt.getMonth() === mes && dt.getFullYear() === ano;
+  let diariasFiltradas = getFilteredDiarias('rel-filter-user');
+  const diariasMes = diariasFiltradas.filter(d => {
+    const dt=new Date(d.data+'T00:00:00');
+    return dt.getMonth()===mes && dt.getFullYear()===ano;
   });
-
   const por_colab = {};
   diariasMes.forEach(d => {
-    if (!por_colab[d.colaborador_id]) por_colab[d.colaborador_id] = { dias: 0, total: 0, pago: 0 };
+    if (!por_colab[d.colaborador_id]) por_colab[d.colaborador_id]={dias:0,total:0,pago:0};
     por_colab[d.colaborador_id].dias++;
     por_colab[d.colaborador_id].total += parseFloat(d.valor||0);
-    if (d.pago === 'pago') por_colab[d.colaborador_id].pago += parseFloat(d.valor||0);
+    if (d.pago==='pago') por_colab[d.colaborador_id].pago += parseFloat(d.valor||0);
   });
-
-  const totalGeral = diariasMes.reduce((s,d) => s + parseFloat(d.valor||0), 0);
-  const totalPago  = diariasMes.filter(d=>d.pago==='pago').reduce((s,d) => s + parseFloat(d.valor||0), 0);
-  const totalPend  = totalGeral - totalPago;
-
-  const container = document.getElementById('relatorio-content');
-  if (Object.keys(por_colab).length === 0) {
-    container.innerHTML = `<div class="empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;display:block;margin:0 auto 12px;opacity:.3;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><p>Nenhuma diária em ${MESES[mes]}/${ano}</p></div>`;
-    return;
-  }
-
-  container.innerHTML = `
+  const totalGeral=diariasMes.reduce((s,d)=>s+parseFloat(d.valor||0),0);
+  const totalPago=diariasMes.filter(d=>d.pago==='pago').reduce((s,d)=>s+parseFloat(d.valor||0),0);
+  const container=document.getElementById('relatorio-content');
+  if (!Object.keys(por_colab).length) { container.innerHTML=`<div class="empty"><p>Nenhuma diária em ${MESES[mes]}/${ano}</p></div>`; return; }
+  container.innerHTML=`
     <div class="stats-grid" style="margin-bottom:20px;">
       <div class="stat-card"><div class="stat-label">Total do Mês</div><div class="stat-value" style="font-size:20px;">R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
       <div class="stat-card" style="border-color:#dcfce7;"><div class="stat-label">Pago</div><div class="stat-value" style="font-size:20px;color:var(--green);">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
-      <div class="stat-card" style="border-color:#fef9c3;"><div class="stat-label">Pendente</div><div class="stat-value" style="font-size:20px;color:var(--yellow);">R$ ${totalPend.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-card" style="border-color:#fef9c3;"><div class="stat-label">Pendente</div><div class="stat-value" style="font-size:20px;color:var(--yellow);">R$ ${(totalGeral-totalPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
     </div>
     <div class="table-wrap">
-      <div style="padding:14px 16px;border-bottom:1px solid var(--border);"><strong style="font-size:14px;">Resumo por Colaborador — ${MESES[mes]} ${ano}</strong></div>
-      <table>
-        <thead><tr><th>Colaborador</th><th>Dias</th><th>Total</th><th>Pago</th><th>Pendente</th><th>Progresso</th></tr></thead>
-        <tbody>` +
-      Object.entries(por_colab).map(([cid, info]) => {
-        const c = colabs.find(x => x.id == cid);
-        const pct = info.total > 0 ? Math.round((info.pago / info.total) * 100) : 0;
-        const pend = info.total - info.pago;
-        return `<tr>
-          <td style="font-weight:500;">${c ? c.nome : 'Desconhecido'}</td>
-          <td>${info.dias}</td>
-          <td style="font-weight:700;">R$ ${info.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-          <td style="color:var(--green);font-weight:600;">R$ ${info.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-          <td style="color:var(--yellow);font-weight:600;">R$ ${pend.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-          <td style="min-width:100px;"><div style="font-size:11px;margin-bottom:3px;color:var(--muted);">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></td>
-        </tr>`;
-      }).join('') + `
-        </tbody>
-      </table>
-    </div>`;
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);"><strong style="font-size:14px;">Por Colaborador — ${MESES[mes]} ${ano}</strong></div>
+      <table><thead><tr><th>Colaborador</th><th>Dias</th><th>Total</th><th>Pago</th><th>Pendente</th><th>Progresso</th></tr></thead><tbody>` +
+    Object.entries(por_colab).map(([cid,info])=>{
+      const c=colabs.find(x=>x.id==cid);
+      const pct=info.total>0?Math.round((info.pago/info.total)*100):0;
+      return `<tr>
+        <td style="font-weight:500;">${c?c.nome:'–'}</td>
+        <td>${info.dias}</td>
+        <td style="font-weight:700;">R$ ${info.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="color:var(--green);font-weight:600;">R$ ${info.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="color:var(--yellow);font-weight:600;">R$ ${(info.total-info.pago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="min-width:100px;"><div style="font-size:11px;margin-bottom:3px;color:var(--muted);">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></td>
+      </tr>`;
+    }).join('') + '</tbody></table></div>';
 }
 
-// ─── CONFIG ──────────────────────────────────
-function alterarSenha() {
-  const atual = document.getElementById('cfg-senha-atual').value;
-  const nova  = document.getElementById('cfg-nova-senha').value;
-  const conf  = document.getElementById('cfg-conf-senha').value;
-  const msgEl = document.getElementById('cfg-msg');
-  if (atual !== adminPass) { msgEl.textContent = '❌ Senha atual incorreta.'; msgEl.style.color = 'var(--red)'; return; }
-  if (nova.length < 4)     { msgEl.textContent = '❌ A nova senha precisa ter ao menos 4 caracteres.'; msgEl.style.color = 'var(--red)'; return; }
-  if (nova !== conf)       { msgEl.textContent = '❌ As senhas não coincidem.'; msgEl.style.color = 'var(--red)'; return; }
-  adminPass = nova;
-  localStorage.setItem('arr_admin_pass', nova);
-  msgEl.textContent = '✅ Senha alterada com sucesso!';
-  msgEl.style.color = 'var(--green)';
-  document.getElementById('cfg-senha-atual').value = '';
-  document.getElementById('cfg-nova-senha').value = '';
-  document.getElementById('cfg-conf-senha').value = '';
+// ─── USUÁRIOS ────────────────────────────────
+function loadUsuarios() { fetchUsuarios().then(renderUsuarios); }
+function renderUsuarios() {
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = usuarios.map(u => `
+    <tr>
+      <td style="font-weight:500;">${u.nome}</td>
+      <td><code style="background:var(--bg);padding:2px 8px;border-radius:5px;font-size:12px;">${u.login}</code></td>
+      <td>${u.perfil==='admin'?'<span class="badge badge-orange">Admin</span>':'<span class="badge badge-blue">Gestor</span>'}</td>
+      <td>${u.status==='ativo'?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-gray">Inativo</span>'}</td>
+      <td>
+        <button class="btn btn-secondary" style="padding:5px 11px;font-size:12px;" onclick="editUser(${u.id})">Editar</button>
+        ${u.login!=='admin'?`<button class="btn btn-danger" style="padding:5px 11px;font-size:12px;margin-left:4px;" onclick="confirmDelete('usuario',${u.id},'${esc(u.nome)}')">Excluir</button>`:''}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted);">Nenhum usuário</td></tr>';
+}
+function openUserModal() {
+  ['user-nome','user-login','user-senha','user-edit-id'].forEach(f=>{const e=document.getElementById(f);if(e)e.value='';});
+  document.getElementById('modal-user-title').textContent='Novo Usuário';
+  document.getElementById('user-perfil').value='gestor';
+  document.getElementById('user-status').value='ativo';
+  document.getElementById('user-edit-pass-wrap').style.display='none';
+  document.getElementById('user-senha').required=true;
+  openModal('modal-user');
+}
+function editUser(id) {
+  const u=usuarios.find(x=>x.id===id); if(!u)return;
+  document.getElementById('modal-user-title').textContent='Editar Usuário';
+  document.getElementById('user-edit-id').value=id;
+  document.getElementById('user-nome').value=u.nome||'';
+  document.getElementById('user-login').value=u.login||'';
+  document.getElementById('user-senha').value='';
+  document.getElementById('user-perfil').value=u.perfil||'gestor';
+  document.getElementById('user-status').value=u.status||'ativo';
+  document.getElementById('user-edit-pass-wrap').style.display='block';
+  openModal('modal-user');
+}
+async function salvarUser() {
+  const nome=v('user-nome'), login=v('user-login').toLowerCase().trim(), senha=v('user-senha');
+  if(!nome||!login){showToast('Preencha nome e login');return;}
+  const editId=v('user-edit-id');
+  if(!editId && !senha){showToast('Informe a senha');return;}
+  if(senha && senha.length<4){showToast('Senha mínima de 4 caracteres');return;}
+  const payload={nome, login, perfil:v('user-perfil'), status:v('user-status')};
+  if(senha) payload.senha=senha;
+  const {error} = editId ? await sb.from('usuarios').update(payload).eq('id',editId) : await sb.from('usuarios').insert({...payload, senha});
+  if(error){showToast('Erro: '+(error.message.includes('unique')?'Login já existe.':error.message));return;}
+  closeModal('modal-user'); showToast(editId?'Usuário atualizado!':'Usuário criado!');
+  await fetchUsuarios(); renderUsuarios(); populateUserFilters();
 }
 
+// ─── CONFIGURAÇÕES ───────────────────────────
+async function alterarSenha() {
+  const atual=v('cfg-senha-atual'), nova=v('cfg-nova-senha'), conf=v('cfg-conf-senha');
+  const msgEl=document.getElementById('cfg-msg');
+  const {data,error} = await sb.from('usuarios').select('senha').eq('id',currentUser.id).single();
+  if(error||!data){msgEl.textContent='❌ Erro ao verificar senha.';msgEl.style.color='var(--red)';return;}
+  if(data.senha!==atual){msgEl.textContent='❌ Senha atual incorreta.';msgEl.style.color='var(--red)';return;}
+  if(nova.length<4){msgEl.textContent='❌ Mínimo 4 caracteres.';msgEl.style.color='var(--red)';return;}
+  if(nova!==conf){msgEl.textContent='❌ As senhas não coincidem.';msgEl.style.color='var(--red)';return;}
+  const {error:e2} = await sb.from('usuarios').update({senha:nova}).eq('id',currentUser.id);
+  if(e2){msgEl.textContent='❌ Erro ao salvar.';msgEl.style.color='var(--red)';return;}
+  msgEl.textContent='✅ Senha alterada!';msgEl.style.color='var(--green)';
+  ['cfg-senha-atual','cfg-nova-senha','cfg-conf-senha'].forEach(f=>document.getElementById(f).value='');
+}
+
+// ─── NAVIGATION ──────────────────────────────
+function navigate(page) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.mobile-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+page).classList.add('active');
+  const el=document.getElementById('nav-'+page); if(el)el.classList.add('active');
+  const mel=document.getElementById('mnav-'+page); if(mel)mel.classList.add('active');
+  if(page==='obras') loadObras();
+  if(page==='colaboradores') loadColabs();
+  if(page==='diarias') loadDiarias();
+  if(page==='relatorio') loadRelatorio();
+  if(page==='usuarios') loadUsuarios();
+}
 
 // ─── CONFIRM DELETE ──────────────────────────
-let _delCallback = null;
 function confirmDelete(type, id, name) {
-  document.getElementById('confirm-msg').textContent = `Deseja excluir ${name}? Esta ação não pode ser desfeita.`;
+  document.getElementById('confirm-msg').textContent=`Deseja excluir ${name}? Esta ação não pode ser desfeita.`;
   document.getElementById('confirm-btn').onclick = async () => {
-    let table = type === 'obra' ? 'obras' : type === 'colab' ? 'colaboradores' : 'diarias';
-    const { error } = await sb.from(table).delete().eq('id', id);
-    if (error) { showToast('Erro: ' + error.message); return; }
-    closeModal('modal-confirm');
-    showToast('Excluído com sucesso!');
-    if (type === 'obra') { await fetchObras(); renderObras(); }
-    if (type === 'colab') { await fetchColabs(); renderColabs(); }
-    if (type === 'diaria') { await fetchDiarias(); buildMonthFilter(); renderDiarias(); renderDashboard(); }
+    const table = type==='obra'?'obras':type==='colab'?'colaboradores':type==='usuario'?'usuarios':'diarias';
+    const {error} = await sb.from(table).delete().eq('id',id);
+    if(error){showToast('Erro: '+error.message);return;}
+    closeModal('modal-confirm'); showToast('Excluído!');
+    if(type==='obra'){await fetchObras();renderObras();}
+    if(type==='colab'){await fetchColabs();renderColabs();}
+    if(type==='diaria'){await fetchDiarias();buildMonthFilter();renderDiarias();renderDashboard();}
+    if(type==='usuario'){await fetchUsuarios();renderUsuarios();populateUserFilters();}
   };
   openModal('modal-confirm');
 }
 
 // ─── HELPERS ─────────────────────────────────
-function v(id) { return document.getElementById(id)?.value || ''; }
-function escHtml(s) { return (s||'').replace(/'/g, "\\'"); }
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function clearModal(id, fields) {
-  fields.forEach(f => { const el = document.getElementById(f); if (el) el.value = ''; });
-}
-
-let _toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-// close modals clicking backdrop
-document.querySelectorAll('.modal-backdrop').forEach(el => {
-  el.addEventListener('click', e => {
-    if (e.target === el) el.classList.remove('open');
-  });
-});
+function v(id){return document.getElementById(id)?.value||'';}
+function esc(s){return (s||'').replace(/'/g,"\\'");}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+let _tt;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);}
+document.querySelectorAll('.modal-backdrop').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});});
 </script>
 </body>
 </html>
