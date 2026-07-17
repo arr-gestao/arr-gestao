@@ -664,7 +664,7 @@ function showApp() {
 
   const isAdmin = currentUser.perfil === 'admin';
   // mostrar itens admin-only
-  document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? '' : 'none');
+  document.querySelectorAll('.admin-only').forEach(el => { if(isAdmin){ if(el.classList.contains('nav-item')||el.classList.contains('mobile-nav-item')||el.classList.contains('user-filter-bar')){el.style.display='flex';}else{el.style.display='table-cell';} }else{el.style.display='none';} });
 
   const h = new Date().getHours();
   document.getElementById('dash-greeting').textContent = (h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + currentUser.nome.split(' ')[0] + '! 👷';
