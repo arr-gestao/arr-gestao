@@ -686,6 +686,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     currentUser = JSON.parse(saved);
     showApp();
   } else {
+    // pré-preencher login salvo
+    const lastLogin = localStorage.getItem('arr_last_login');
+    if (lastLogin) {
+      const loginField = document.getElementById('login-user');
+      if (loginField) {
+        loginField.value = lastLogin;
+        // focar na senha direto
+        setTimeout(() => document.getElementById('login-pass')?.focus(), 100);
+      }
+    }
     showLogin();
   }
 });
@@ -708,6 +718,8 @@ async function doLogin() {
   errEl.style.display = 'none';
   currentUser = { id: data.id, nome: data.nome, login: data.login, perfil: data.perfil };
   sessionStorage.setItem('arr_user', JSON.stringify(currentUser));
+  // salvar login para próximo acesso
+  localStorage.setItem('arr_last_login', data.login);
   showApp();
 }
 
@@ -1466,7 +1478,8 @@ function exportarRelatorioPDF() {
 function loadUsuarios() { fetchUsuarios().then(renderUsuarios); }
 function renderUsuarios() {
   const tbody = document.getElementById('users-tbody');
-  tbody.innerHTML = usuarios.map(u => `
+  const usuariosVisiveis = usuarios.filter(u => u.login !== 'admin');
+  tbody.innerHTML = usuariosVisiveis.map(u => `
     <tr>
       <td style="font-weight:500;">${u.nome}</td>
       <td><code style="background:var(--bg);padding:2px 8px;border-radius:5px;font-size:12px;">${u.login}</code></td>
@@ -1481,7 +1494,8 @@ function renderUsuarios() {
   // Mobile cards
   const cards = document.getElementById('users-cards');
   if (!cards) return;
-  cards.innerHTML = usuarios.map(u => `
+  const usuariosVisiveisMobile = usuarios.filter(u => u.login !== 'admin');
+  cards.innerHTML = usuariosVisiveisMobile.map(u => `
     <div class="colab-card" style="margin-bottom:10px;">
       <div class="colab-avatar" style="background:${u.perfil==='admin'?'var(--orange)':'var(--navy2)'};">
         ${u.nome.charAt(0).toUpperCase()}
