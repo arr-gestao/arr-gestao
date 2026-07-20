@@ -163,6 +163,29 @@
     .month-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;background:var(--bg);color:var(--muted);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;}
     .month-chip.active{background:var(--orange);color:white;border-color:var(--orange);}
     .progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:6px;}
+    .colab-rel-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow);}
+    .colab-rel-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;transition:background .15s;user-select:none;}
+    .colab-rel-header:hover{background:var(--bg);}
+    .colab-rel-avatar{width:40px;height:40px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;flex-shrink:0;}
+    .colab-rel-info{flex:1;}
+    .colab-rel-info h3{font-size:14px;font-weight:700;color:var(--navy);}
+    .colab-rel-info p{font-size:12px;color:var(--muted);margin-top:2px;}
+    .colab-rel-total{text-align:right;flex-shrink:0;}
+    .colab-rel-total .valor{font-size:16px;font-weight:700;color:var(--orange2);}
+    .colab-rel-total .sub{font-size:10px;color:var(--muted);margin-top:1px;}
+    .colab-rel-chevron{font-size:16px;color:var(--muted);transition:transform .25s;flex-shrink:0;}
+    .colab-rel-chevron.open{transform:rotate(180deg);}
+    .colab-rel-body{display:none;border-top:1px solid var(--border);}
+    .colab-rel-body.open{display:block;}
+    .periodo-filter{display:flex;gap:4px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+    .periodo-chip{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;background:white;color:var(--muted);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;white-space:nowrap;}
+    .periodo-chip.active{background:var(--orange);color:white;border-color:var(--orange);}
+    .diaria-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
+    .diaria-row:last-child{border-bottom:none;}
+    .diaria-row-date{font-size:11px;font-weight:700;color:var(--navy);background:var(--bg);border-radius:6px;padding:4px 8px;text-align:center;min-width:44px;flex-shrink:0;}
+    .diaria-row-obra{flex:1;font-size:12px;color:var(--text);}
+    .diaria-row-obs{font-size:10px;color:var(--muted);}
+    .diaria-row-val{font-size:13px;font-weight:700;color:var(--orange2);text-align:right;flex-shrink:0;}
     .presenca-toggle{display:flex;gap:0;border-radius:9px;overflow:hidden;border:1.5px solid var(--border);width:100%;}
     .presenca-btn{flex:1;padding:10px 8px;font-size:13px;font-weight:600;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg);color:var(--muted);border:none;font-family:inherit;}
     .presenca-btn.presente.active{background:#dcfce7;color:#16a34a;}
@@ -1124,6 +1147,9 @@ async function marcarPago(id) {
 }
 
 // ─── RELATÓRIO ───────────────────────────────
+// estado dos períodos por colaborador
+const _relPeriodo = {};
+
 async function loadRelatorio() {
   const mes = parseInt(v('rel-mes')), ano = parseInt(document.getElementById('rel-ano').value);
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -1133,46 +1159,137 @@ async function loadRelatorio() {
     const dt=new Date(d.data+'T00:00:00');
     return dt.getMonth()===mes && dt.getFullYear()===ano;
   });
+
   const por_colab = {};
   diariasMes.forEach(d => {
-    if (!por_colab[d.colaborador_id]) por_colab[d.colaborador_id]={dias:0,total:0,pago:0,presencas:0,faltas:0};
+    if (!por_colab[d.colaborador_id]) por_colab[d.colaborador_id]={dias:0,total:0,pago:0,presencas:0,faltas:0,registros:[]};
     por_colab[d.colaborador_id].dias++;
     if (d.presenca === 'ausente') {
       por_colab[d.colaborador_id].faltas++;
+      por_colab[d.colaborador_id].registros.push(d);
     } else {
       por_colab[d.colaborador_id].presencas++;
       por_colab[d.colaborador_id].total += parseFloat(d.valor||0);
       if (d.pago==='pago') por_colab[d.colaborador_id].pago += parseFloat(d.valor||0);
+      por_colab[d.colaborador_id].registros.push(d);
     }
   });
-  const totalGeral=diariasMes.reduce((s,d)=>s+parseFloat(d.valor||0),0);
+
+  const totalGeral=diariasMes.filter(d=>d.presenca!=='ausente').reduce((s,d)=>s+parseFloat(d.valor||0),0);
   const totalPago=diariasMes.filter(d=>d.pago==='pago').reduce((s,d)=>s+parseFloat(d.valor||0),0);
+  const totalFaltas=diariasMes.filter(d=>d.presenca==='ausente').length;
   const container=document.getElementById('relatorio-content');
   if (!Object.keys(por_colab).length) { container.innerHTML=`<div class="empty"><p>Nenhuma diária em ${MESES[mes]}/${ano}</p></div>`; return; }
-  const totalFaltas = diariasMes.filter(d=>d.presenca==='ausente').length;
+
+  const cardsHTML = Object.entries(por_colab).map(([cid,info])=>{
+    const c=colabs.find(x=>x.id==cid);
+    const nome=c?c.nome:'Desconhecido';
+    const pct=info.total>0?Math.round((info.pago/info.total)*100):0;
+    const pend=info.total-info.pago;
+    return `<div class="colab-rel-card" id="card-${cid}">
+      <div class="colab-rel-header" onclick="toggleRelCard(${cid})">
+        <div class="colab-rel-avatar">${nome.charAt(0).toUpperCase()}</div>
+        <div class="colab-rel-info">
+          <h3>${nome}</h3>
+          <p>✅ ${info.presencas} presenças &nbsp;·&nbsp; ❌ ${info.faltas} falta(s)</p>
+          <div style="margin-top:6px;"><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div>
+          <p style="margin-top:3px;">${pct}% pago</p>
+        </div>
+        <div class="colab-rel-total">
+          <div class="valor">R$ ${info.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+          <div class="sub" style="color:var(--green);">Pago: R$ ${info.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+          <div class="sub" style="color:var(--yellow);">Pend: R$ ${pend.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        </div>
+        <div class="colab-rel-chevron" id="chev-${cid}">▼</div>
+      </div>
+      <div class="colab-rel-body" id="body-${cid}">
+        <div class="periodo-filter">
+          <span style="font-size:11px;font-weight:600;color:var(--muted);align-self:center;margin-right:4px;">Período:</span>
+          <div class="periodo-chip active" id="chip-${cid}-todos" onclick="filtrarPeriodoColab(${cid},'todos')">Todos</div>
+          <div class="periodo-chip" id="chip-${cid}-semanal" onclick="filtrarPeriodoColab(${cid},'semanal')">Semanal</div>
+          <div class="periodo-chip" id="chip-${cid}-quinzenal" onclick="filtrarPeriodoColab(${cid},'quinzenal')">Quinzenal</div>
+          <div class="periodo-chip" id="chip-${cid}-mensal" onclick="filtrarPeriodoColab(${cid},'mensal')">Mensal</div>
+        </div>
+        <div id="linhas-${cid}">
+          ${renderLinhasColab(info.registros, 'todos')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
   container.innerHTML=`
-    <div class="stats-grid" style="margin-bottom:20px;">
-      <div class="stat-card"><div class="stat-label">Total do Mês</div><div class="stat-value" style="font-size:20px;">R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
-      <div class="stat-card" style="border-color:#dcfce7;"><div class="stat-label">Pago</div><div class="stat-value" style="font-size:20px;color:var(--green);">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
-      <div class="stat-card" style="border-color:#fef9c3;"><div class="stat-label">Pendente</div><div class="stat-value" style="font-size:20px;color:var(--yellow);">R$ ${(totalGeral-totalPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
-      <div class="stat-card" style="border-color:#fef2f2;"><div class="stat-label">Faltas</div><div class="stat-value" style="font-size:20px;color:var(--red);">${totalFaltas}</div></div>
+    <div class="stats-grid" style="margin-bottom:16px;">
+      <div class="stat-card"><div class="stat-label">Total do Mês</div><div class="stat-value" style="font-size:18px;">R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-card" style="border-color:#dcfce7;"><div class="stat-label">Pago</div><div class="stat-value" style="font-size:18px;color:var(--green);">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-card" style="border-color:#fef9c3;"><div class="stat-label">Pendente</div><div class="stat-value" style="font-size:18px;color:var(--yellow);">R$ ${(totalGeral-totalPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+      <div class="stat-card" style="border-color:#fef2f2;"><div class="stat-label">Faltas</div><div class="stat-value" style="font-size:18px;color:var(--red);">${totalFaltas}</div></div>
     </div>
-    <div class="table-wrap">
-      <div style="padding:14px 16px;border-bottom:1px solid var(--border);"><strong style="font-size:14px;">Por Colaborador — ${MESES[mes]} ${ano}</strong></div>
-      <table><thead><tr><th>Colaborador</th><th>Presenças</th><th>Faltas</th><th>Total</th><th>Pago</th><th>Pendente</th><th>Progresso</th></tr></thead><tbody>` +
-    Object.entries(por_colab).map(([cid,info])=>{
-      const c=colabs.find(x=>x.id==cid);
-      const pct=info.total>0?Math.round((info.pago/info.total)*100):0;
-      return `<tr>
-        <td style="font-weight:500;">${c?c.nome:'–'}</td>
-        <td style="font-weight:600;color:var(--green);">${info.presencas}</td>
-        <td style="font-weight:600;color:var(--red);">${info.faltas}</td>
-        <td style="font-weight:700;">R$ ${info.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="color:var(--green);font-weight:600;">R$ ${info.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="color:var(--yellow);font-weight:600;">R$ ${(info.total-info.pago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="min-width:100px;"><div style="font-size:11px;margin-bottom:3px;color:var(--muted);">${pct}%</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></td>
-      </tr>`;
-    }).join('') + '</tbody></table></div>';
+    <div style="margin-bottom:8px;font-size:13px;font-weight:600;color:var(--muted);">Toque no colaborador para expandir os detalhes ↓</div>
+    ${cardsHTML}`;
+}
+
+function renderLinhasColab(registros, periodo) {
+  const hoje = new Date();
+  const MESES_PT=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  let filtrados = [...registros].sort((a,b)=>new Date(b.data)-new Date(a.data));
+
+  if (periodo === 'semanal') {
+    const ini = new Date(hoje); ini.setDate(hoje.getDate() - hoje.getDay());
+    ini.setHours(0,0,0,0);
+    filtrados = filtrados.filter(d => new Date(d.data+'T00:00:00') >= ini);
+  } else if (periodo === 'quinzenal') {
+    const ini = new Date(hoje); ini.setDate(hoje.getDate() - 14);
+    ini.setHours(0,0,0,0);
+    filtrados = filtrados.filter(d => new Date(d.data+'T00:00:00') >= ini);
+  }
+  // 'mensal' e 'todos' já vêm filtrados pelo mês selecionado no relatório
+
+  if (!filtrados.length) return `<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">Nenhum registro neste período</div>`;
+
+  const totalFiltrado = filtrados.filter(d=>d.presenca!=='ausente').reduce((s,d)=>s+parseFloat(d.valor||0),0);
+  const pagoFiltrado  = filtrados.filter(d=>d.pago==='pago').reduce((s,d)=>s+parseFloat(d.valor||0),0);
+
+  return filtrados.map(d => {
+    const o = obras.find(x=>x.id===d.obra_id);
+    const dt = new Date(d.data+'T00:00:00');
+    const ausente = d.presenca === 'ausente';
+    const dtStr = `${dt.getDate()} ${MESES_PT[dt.getMonth()]} ${dt.getFullYear()}`;
+    const pagoBadge = d.pago==='pago'
+      ? `<span class="badge badge-green" style="font-size:10px;">Pago${d.data_pagamento?' · '+new Date(d.data_pagamento+'T00:00:00').toLocaleDateString('pt-BR'):''}</span>`
+      : ausente ? `<span class="badge badge-red" style="font-size:10px;">Falta</span>`
+      : `<span class="badge badge-yellow" style="font-size:10px;">Pendente</span>`;
+    return `<div class="diaria-row" style="${ausente?'background:#fff8f8;':''}">
+      <div class="diaria-row-date">${dt.getDate()}<br/><small style="font-size:9px;">${MESES_PT[dt.getMonth()]}</small></div>
+      <div style="flex:1;">
+        <div class="diaria-row-obra">${o?o.nome:'–'}</div>
+        ${d.obs?`<div class="diaria-row-obs">${d.obs}</div>`:''}
+        <div style="margin-top:3px;">${pagoBadge}</div>
+      </div>
+      <div class="diaria-row-val">${ausente?'<span style="color:var(--red);font-size:11px;">Falta</span>':'R$ '+parseFloat(d.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+    </div>`;
+  }).join('') + `<div style="padding:10px 14px;background:var(--bg);display:flex;justify-content:space-between;font-size:12px;font-weight:700;">
+    <span>Total: R$ ${totalFiltrado.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+    <span style="color:var(--green);">Pago: R$ ${pagoFiltrado.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+  </div>`;
+}
+
+function toggleRelCard(cid) {
+  const body = document.getElementById('body-'+cid);
+  const chev = document.getElementById('chev-'+cid);
+  const open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+
+function filtrarPeriodoColab(cid, periodo) {
+  // atualizar chips
+  ['todos','semanal','quinzenal','mensal'].forEach(p => {
+    const chip = document.getElementById(`chip-${cid}-${p}`);
+    if (chip) chip.classList.toggle('active', p===periodo);
+  });
+  // rerenderizar linhas
+  const info_registros = diarias.filter(d=>String(d.colaborador_id)===String(cid));
+  document.getElementById('linhas-'+cid).innerHTML = renderLinhasColab(info_registros, periodo);
 }
 
 // ─── RESUMO POR OBRA ─────────────────────────
