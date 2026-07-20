@@ -779,7 +779,8 @@ async function fetchUsuarios() {
 // ─── FILTROS DE USUÁRIO ───────────────────────
 function populateUserFilters() {
   if (currentUser.perfil !== 'admin') return;
-  const opts = '<option value="">Todos</option>' + usuarios.map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
+  const usuariosFiltro = usuarios.filter(u => u.login !== 'admin');
+  const opts = '<option value="">Todos</option>' + usuariosFiltro.map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
   ['dash-filter-user','diaria-filter-user','rel-filter-user'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
