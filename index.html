@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
   <style>
     :root {
       --navy:#1a2c4e; --navy2:#243a63; --orange:#f5890a; --orange2:#e07800;
@@ -725,7 +725,12 @@
 // ─── CONFIG ──────────────────────────────────
 const SB_URL = 'https://vcgvupyxxmtftookryli.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjZ3Z1cHl4eG10ZnRvb2tyeWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyNzU2MzAsImV4cCI6MjA5OTg1MTYzMH0.7duYp3Rxqd3phyC_MTUkXCiWUx22wpeuckFtAnYypWQ';
-const sb = supabase.createClient(SB_URL, SB_KEY);
+let sb;
+try {
+  sb = supabase.createClient(SB_URL, SB_KEY);
+} catch(e) {
+  console.error('Supabase init error:', e);
+}
 
 // ─── ESTADO ──────────────────────────────────
 let currentUser = null; // { id, nome, login, perfil }
@@ -734,32 +739,39 @@ let selectedMonth = null;
 
 // ─── BOOT ────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  const h = new Date().getHours();
-  document.getElementById('dash-greeting').textContent = (h<12?'Bom dia':h<18?'Boa tarde':'Boa noite') + '! 👷';
-  const now = new Date();
-  document.getElementById('rel-ano').value = now.getFullYear();
-  const obraRelAno = document.getElementById('obra-rel-ano');
-  if (obraRelAno) obraRelAno.value = now.getFullYear();
-  document.getElementById('rel-mes').value = now.getMonth();
+  try {
+    const h = new Date().getHours();
+    const greetEl = document.getElementById('dash-greeting');
+    if (greetEl) greetEl.textContent = (h<12?'Bom dia':h<18?'Boa tarde':'Boa noite') + '! 👷';
+    const now = new Date();
+    const relAno = document.getElementById('rel-ano');
+    if (relAno) relAno.value = now.getFullYear();
+    const obraRelAno = document.getElementById('obra-rel-ano');
+    if (obraRelAno) obraRelAno.value = now.getFullYear();
+    const relMes = document.getElementById('rel-mes');
+    if (relMes) relMes.value = now.getMonth();
 
-  await new Promise(r => setTimeout(r, 800));
-  document.getElementById('app-loading').style.display = 'none';
+    await new Promise(r => setTimeout(r, 800));
+    document.getElementById('app-loading').style.display = 'none';
 
-  const saved = sessionStorage.getItem('arr_user');
-  if (saved) {
-    currentUser = JSON.parse(saved);
-    showApp();
-  } else {
-    // pré-preencher login salvo
-    const lastLogin = localStorage.getItem('arr_last_login');
-    if (lastLogin) {
-      const loginField = document.getElementById('login-user');
-      if (loginField) {
-        loginField.value = lastLogin;
-        // focar na senha direto
-        setTimeout(() => document.getElementById('login-pass')?.focus(), 100);
+    const saved = sessionStorage.getItem('arr_user');
+    if (saved) {
+      currentUser = JSON.parse(saved);
+      showApp();
+    } else {
+      const lastLogin = localStorage.getItem('arr_last_login');
+      if (lastLogin) {
+        const loginField = document.getElementById('login-user');
+        if (loginField) {
+          loginField.value = lastLogin;
+          setTimeout(() => document.getElementById('login-pass')?.focus(), 100);
+        }
       }
+      showLogin();
     }
+  } catch(err) {
+    console.error('Boot error:', err);
+    document.getElementById('app-loading').style.display = 'none';
     showLogin();
   }
 });
@@ -1611,4 +1623,173 @@ function exportarRelatorioPDF() {
   const rows = Object.entries(por_colab).map(([cid,info])=>{
     const c=colabs.find(x=>x.id==cid);
     const pct=info.total>0?Math.round((info.pago/info.total)*100):0;
-    const pend=info.total-info.pago
+    const pend=info.total-info.pago;
+    return `<tr>
+      <td><b>${c?c.nome:'–'}</b></td>
+      <td style="color:#22c55e;font-weight:600;">${info.presencas}</td>
+      <td style="color:#ef4444;font-weight:600;">${info.faltas}</td>
+      <td><b>R$ ${info.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</b></td>
+      <td><span class="badge-g">R$ ${info.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></td>
+      <td><span class="${pend>0?'badge-y':'badge-g'}">R$ ${pend.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></td>
+      <td><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div><div style="font-size:10px;color:#7a8aaa;margin-top:2px;">${pct}%</div></td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório ${MESES[mes]} ${ano}</title>
+  <style>${style}</style></head><body>
+  <div class="header">
+    <div><h1>▲ ARR Projeto e Construções</h1><p>Relatório de Colaboradores</p></div>
+    <div style="text-align:right;"><div style="color:white;font-size:16px;font-weight:700;">${MESES[mes]} ${ano}</div><div style="color:rgba(255,255,255,.6);font-size:11px;">Gerado em ${new Date().toLocaleDateString('pt-BR')}</div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="label">Total do Mês</div><div class="val">R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+    <div class="stat"><div class="label">Pago</div><div class="val" style="color:#22c55e;">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+    <div class="stat"><div class="label">Pendente</div><div class="val" style="color:#f59e0b;">R$ ${(totalGeral-totalPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>
+    <div class="stat"><div class="label">Faltas</div><div class="val" style="color:#ef4444;">${totalFaltas}</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Colaborador</th><th>Presenças</th><th>Faltas</th><th>Total</th><th>Pago</th><th>Pendente</th><th>Progresso</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="footer">ARR Gestão de Colaboradores · Relatório gerado em ${new Date().toLocaleString('pt-BR')}</div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`;
+
+  win.document.write(html);
+  win.document.close();
+}
+
+// ─── USUÁRIOS ────────────────────────────────
+function loadUsuarios() { fetchUsuarios().then(renderUsuarios); }
+function renderUsuarios() {
+  const tbody = document.getElementById('users-tbody');
+  const usuariosVisiveis = usuarios.filter(u => u.login !== 'admin');
+  tbody.innerHTML = usuariosVisiveis.map(u => `
+    <tr>
+      <td style="font-weight:500;">${u.nome}</td>
+      <td><code style="background:var(--bg);padding:2px 8px;border-radius:5px;font-size:12px;">${u.login}</code></td>
+      <td>${u.perfil==='admin'?'<span class="badge badge-orange">Admin</span>':'<span class="badge badge-blue">Gestor</span>'}</td>
+      <td>${u.status==='ativo'?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-gray">Inativo</span>'}</td>
+      <td>
+        <button class="btn btn-secondary" style="padding:5px 11px;font-size:12px;" onclick="editUser(${u.id})">Editar</button>
+        ${u.login!=='admin'?`<button class="btn btn-danger" style="padding:5px 11px;font-size:12px;margin-left:4px;" onclick="confirmDelete('usuario',${u.id},'${esc(u.nome)}')">Excluir</button>`:''}
+      </td>
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--muted);">Nenhum usuário</td></tr>';
+
+  // Mobile cards
+  const cards = document.getElementById('users-cards');
+  if (!cards) return;
+  const usuariosVisiveisMobile = usuarios.filter(u => u.login !== 'admin');
+  cards.innerHTML = usuariosVisiveisMobile.map(u => `
+    <div class="colab-card" style="margin-bottom:10px;">
+      <div class="colab-avatar" style="background:${u.perfil==='admin'?'var(--orange)':'var(--navy2)'};">
+        ${u.nome.charAt(0).toUpperCase()}
+      </div>
+      <div class="colab-info">
+        <h3 style="font-size:14px;font-weight:600;">${u.nome}</h3>
+        <p style="font-size:12px;color:var(--muted);margin-top:2px;">
+          <code style="background:var(--bg);padding:1px 6px;border-radius:4px;font-size:11px;">${u.login}</code>
+        </p>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+          ${u.perfil==='admin'?'<span class="badge badge-orange">Admin</span>':'<span class="badge badge-blue">Gestor</span>'}
+          ${u.status==='ativo'?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-gray">Inativo</span>'}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
+        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="editUser(${u.id})">Editar</button>
+        ${u.login!=='admin'?`<button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="confirmDelete('usuario',${u.id},'${esc(u.nome)}')">Excluir</button>`:''}
+      </div>
+    </div>`).join('') || '<div class="empty"><p>Nenhum usuário</p></div>';
+}
+function openUserModal() {
+  ['user-nome','user-login','user-senha','user-edit-id'].forEach(f=>{const e=document.getElementById(f);if(e)e.value='';});
+  document.getElementById('modal-user-title').textContent='Novo Usuário';
+  document.getElementById('user-perfil').value='gestor';
+  document.getElementById('user-status').value='ativo';
+  document.getElementById('user-edit-pass-wrap').style.display='none';
+  document.getElementById('user-senha').required=true;
+  openModal('modal-user');
+}
+function editUser(id) {
+  const u=usuarios.find(x=>x.id===id); if(!u)return;
+  document.getElementById('modal-user-title').textContent='Editar Usuário';
+  document.getElementById('user-edit-id').value=id;
+  document.getElementById('user-nome').value=u.nome||'';
+  document.getElementById('user-login').value=u.login||'';
+  document.getElementById('user-senha').value='';
+  document.getElementById('user-perfil').value=u.perfil||'gestor';
+  document.getElementById('user-status').value=u.status||'ativo';
+  document.getElementById('user-edit-pass-wrap').style.display='block';
+  openModal('modal-user');
+}
+async function salvarUser() {
+  const nome=v('user-nome'), login=v('user-login').toLowerCase().trim(), senha=v('user-senha');
+  if(!nome||!login){showToast('Preencha nome e login');return;}
+  const editId=v('user-edit-id');
+  if(!editId && !senha){showToast('Informe a senha');return;}
+  if(senha && senha.length<4){showToast('Senha mínima de 4 caracteres');return;}
+  const payload={nome, login, perfil:v('user-perfil'), status:v('user-status')};
+  if(senha) payload.senha=senha;
+  const {error} = editId ? await sb.from('usuarios').update(payload).eq('id',editId) : await sb.from('usuarios').insert({...payload, senha});
+  if(error){showToast('Erro: '+(error.message.includes('unique')?'Login já existe.':error.message));return;}
+  closeModal('modal-user'); showToast(editId?'Usuário atualizado!':'Usuário criado!');
+  await fetchUsuarios(); renderUsuarios(); populateUserFilters();
+}
+
+// ─── CONFIGURAÇÕES ───────────────────────────
+async function alterarSenha() {
+  const atual=v('cfg-senha-atual'), nova=v('cfg-nova-senha'), conf=v('cfg-conf-senha');
+  const msgEl=document.getElementById('cfg-msg');
+  const {data,error} = await sb.from('usuarios').select('senha').eq('id',currentUser.id).single();
+  if(error||!data){msgEl.textContent='❌ Erro ao verificar senha.';msgEl.style.color='var(--red)';return;}
+  if(data.senha!==atual){msgEl.textContent='❌ Senha atual incorreta.';msgEl.style.color='var(--red)';return;}
+  if(nova.length<4){msgEl.textContent='❌ Mínimo 4 caracteres.';msgEl.style.color='var(--red)';return;}
+  if(nova!==conf){msgEl.textContent='❌ As senhas não coincidem.';msgEl.style.color='var(--red)';return;}
+  const {error:e2} = await sb.from('usuarios').update({senha:nova}).eq('id',currentUser.id);
+  if(e2){msgEl.textContent='❌ Erro ao salvar.';msgEl.style.color='var(--red)';return;}
+  msgEl.textContent='✅ Senha alterada!';msgEl.style.color='var(--green)';
+  ['cfg-senha-atual','cfg-nova-senha','cfg-conf-senha'].forEach(f=>document.getElementById(f).value='');
+}
+
+// ─── NAVIGATION ──────────────────────────────
+function navigate(page) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item,.mobile-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+page).classList.add('active');
+  const el=document.getElementById('nav-'+page); if(el)el.classList.add('active');
+  const mel=document.getElementById('mnav-'+page); if(mel)mel.classList.add('active');
+  if(page==='obras') loadObras();
+  if(page==='resumo-obra') loadResumoObra();
+  if(page==='colaboradores') loadColabs();
+  if(page==='diarias') loadDiarias();
+  if(page==='relatorio') loadRelatorio();
+  if(page==='usuarios') loadUsuarios();
+}
+
+// ─── CONFIRM DELETE ──────────────────────────
+function confirmDelete(type, id, name) {
+  document.getElementById('confirm-msg').textContent=`Deseja excluir ${name}? Esta ação não pode ser desfeita.`;
+  document.getElementById('confirm-btn').onclick = async () => {
+    const table = type==='obra'?'obras':type==='colab'?'colaboradores':type==='usuario'?'usuarios':'diarias';
+    const {error} = await sb.from(table).delete().eq('id',id);
+    if(error){showToast('Erro: '+error.message);return;}
+    closeModal('modal-confirm'); showToast('Excluído!');
+    if(type==='obra'){await fetchObras();renderObras();}
+    if(type==='colab'){await fetchColabs();renderColabs();}
+    if(type==='diaria'){await fetchDiarias();buildMonthFilter();renderDiarias();renderDashboard();}
+    if(type==='usuario'){await fetchUsuarios();renderUsuarios();populateUserFilters();}
+  };
+  openModal('modal-confirm');
+}
+
+// ─── HELPERS ─────────────────────────────────
+function v(id){return document.getElementById(id)?.value||'';}
+function esc(s){return (s||'').replace(/'/g,"\\'");}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+let _tt;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);}
+document.querySelectorAll('.modal-backdrop').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});});
+</script>
+</body>
+</html>
