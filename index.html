@@ -926,8 +926,13 @@ function renderDashboard() {
     const o = obras.find(x => x.id === d.obra_id);
     const u = usuarios.find(x => x.id === d.usuario_id);
     const dt = new Date(d.data + 'T00:00:00');
+    const DIAS_SEMANA_DASH = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     return `<div class="diaria-item">
-      <div class="diaria-date">${dt.getDate()} <small>${MESES_PT[dt.getMonth()]}</small></div>
+      <div class="diaria-date">
+        <div style="font-size:13px;font-weight:700;">${dt.getDate()}</div>
+        <div style="font-size:9px;text-transform:uppercase;color:var(--muted);">${MESES_PT[dt.getMonth()]}</div>
+        <div style="font-size:9px;font-weight:700;color:var(--orange);">${DIAS_SEMANA_DASH[dt.getDay()]}</div>
+      </div>
       <div class="diaria-info">
         <h4>${c ? c.nome : '–'}</h4>
         <p>${o ? o.nome : '–'}${isAdmin && u ? ' · <span style="color:var(--orange2);">'+u.nome.split(' ')[0]+'</span>' : ''}</p>
@@ -1123,9 +1128,14 @@ function renderDiarias(list) {
     const o=obras.find(x=>x.id===d.obra_id);
     const dt=new Date(d.data+'T00:00:00');
     const ausente2 = d.presenca === 'ausente';
+    const DIAS_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     return `<div style="background:${ausente2?'#fff8f8':'var(--surface)'};border:1px solid ${ausente2?'#fecaca':'var(--border)'};border-radius:10px;margin-bottom:10px;overflow:hidden;">
       <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">
-        <div class="diaria-date" style="${ausente2?'background:#fef2f2;':''}">${dt.getDate()} <small>${MESES_PT[dt.getMonth()]}</small></div>
+        <div class="diaria-date" style="${ausente2?'background:#fef2f2;':''}${ausente2?'':''}">
+          <div style="font-size:13px;font-weight:700;">${dt.getDate()}</div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;color:var(--muted);">${MESES_PT[dt.getMonth()]}</div>
+          <div style="font-size:9px;font-weight:700;color:var(--orange);margin-top:1px;">${DIAS_SEMANA[dt.getDay()]}</div>
+        </div>
         <div class="diaria-info" style="flex:1;">
           <h4>${c?c.nome:'–'}</h4>
           <p>${o?o.nome:'–'}</p>
@@ -1457,7 +1467,11 @@ function renderLinhasColab(registros, periodo) {
       : ausente ? `<span class="badge badge-red" style="font-size:10px;">Falta</span>`
       : `<span class="badge badge-yellow" style="font-size:10px;">Pendente</span>`;
     return `<div class="diaria-row" style="${ausente?'background:#fff8f8;':''}">
-      <div class="diaria-row-date">${dt.getDate()}<br/><small style="font-size:9px;">${MESES_PT[dt.getMonth()]}</small></div>
+      <div class="diaria-row-date">
+        <div style="font-size:12px;font-weight:700;">${dt.getDate()}</div>
+        <div style="font-size:9px;color:var(--muted);">${MESES_PT[dt.getMonth()]}</div>
+        <div style="font-size:9px;font-weight:700;color:var(--orange);">${DIAS_SEMANA_REL[dt.getDay()].substring(0,3)}</div>
+      </div>
       <div style="flex:1;">
         <div class="diaria-row-obra">${o?o.nome:'–'}</div>
         ${d.obs?`<div class="diaria-row-obs">${d.obs}</div>`:''}
