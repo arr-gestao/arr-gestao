@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
   <style>
     :root {
       --navy:#1a2c4e; --navy2:#243a63; --orange:#f5890a; --orange2:#e07800;
@@ -785,6 +785,7 @@ async function doLogin() {
   const errEl = document.getElementById('login-error');
   if (!login || !senha) { errEl.style.display = 'block'; errEl.textContent = 'Preencha usuário e senha.'; return; }
 
+  if (!sb) { errEl.style.display = 'block'; errEl.textContent = 'Erro de conexão. Tente novamente.'; return; }
   const { data, error } = await sb.from('usuarios').select('*').eq('login', login).eq('status', 'ativo').single();
   if (error || !data) { errEl.style.display = 'block'; errEl.textContent = 'Usuário não encontrado ou inativo.'; return; }
 
@@ -830,26 +831,34 @@ function showApp() {
 
 // ─── DATA ────────────────────────────────────
 async function loadAll() {
-  await Promise.all([fetchColabs(), fetchObras(), fetchDiarias(), fetchUsuarios()]);
+  try {
+    await Promise.race([
+      Promise.all([fetchColabs(), fetchObras(), fetchDiarias(), fetchUsuarios()]),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+    ]);
+  } catch(e) {
+    console.error('loadAll error:', e);
+    showToast('⚠️ Erro ao carregar dados. Verifique a conexão.');
+  }
   renderDashboard();
   populateUserFilters();
 }
 
 async function fetchColabs() {
-  const { data } = await sb.from('colaboradores').select('*').order('nome');
-  colabs = data || [];
+  if (!sb) return;
+  try { const { data } = await sb.from('colaboradores').select('*').order('nome'); colabs = data || []; } catch(e) { console.error('fetchColabs:', e); }
 }
 async function fetchObras() {
-  const { data } = await sb.from('obras').select('*').order('created_at', { ascending: false });
-  obras = data || [];
+  if (!sb) return;
+  try { const { data } = await sb.from('obras').select('*').order('created_at', { ascending: false }); obras = data || []; } catch(e) { console.error('fetchObras:', e); }
 }
 async function fetchDiarias() {
-  const { data } = await sb.from('diarias').select('*').order('data', { ascending: false });
-  diarias = data || [];
+  if (!sb) return;
+  try { const { data } = await sb.from('diarias').select('*').order('data', { ascending: false }); diarias = data || []; } catch(e) { console.error('fetchDiarias:', e); }
 }
 async function fetchUsuarios() {
-  const { data } = await sb.from('usuarios').select('id,nome,login,perfil,status').order('nome');
-  usuarios = data || [];
+  if (!sb) return;
+  try { const { data } = await sb.from('usuarios').select('id,nome,login,perfil,status').order('nome'); usuarios = data || []; } catch(e) { console.error('fetchUsuarios:', e); }
 }
 
 // ─── FILTROS DE USUÁRIO ───────────────────────
@@ -1609,11 +1618,4 @@ function exportarRelatorioPDF() {
     .header h1{color:white;margin:0;font-size:18px;} .header p{color:rgba(255,255,255,.7);margin:0;font-size:12px;}
     .stats{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
     .stat{border:1px solid #e2e7f0;border-radius:8px;padding:12px 16px;min-width:140px;}
-    .stat .label{font-size:10px;color:#7a8aaa;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
-    .stat .val{font-size:20px;font-weight:700;}
-    table{width:100%;border-collapse:collapse;margin-top:8px;}
-    th{background:#f4f6fb;font-size:11px;color:#7a8aaa;text-transform:uppercase;padding:8px 12px;text-align:left;border-bottom:1px solid #e2e7f0;}
-    td{padding:10px 12px;font-size:12px;border-bottom:1px solid #e2e7f0;}
-    .badge-g{background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
-    .badge-y{background:#fef9c3;color:#a16207;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
-    .badge-r{background:#fef2f2;color:#ef4444;padding:2px
+    .stat .label{font-size:10px;color:#7a8aaa;text-transform
