@@ -1458,6 +1458,7 @@ async function loadRelatorio() {
 function renderLinhasColab(registros, periodo) {
   const hoje = new Date();
   const MESES_PT=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const DIAS_SEMANA_REL=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 
   let filtrados = [...registros].sort((a,b)=>new Date(b.data)-new Date(a.data));
 
