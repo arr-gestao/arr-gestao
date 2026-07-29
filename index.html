@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://unpkg.com/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+  <script src="./supabase.min.js"></script>
   <style>
     :root {
       --navy:#1a2c4e; --navy2:#243a63; --orange:#f5890a; --orange2:#e07800;
@@ -738,43 +738,50 @@ let colabs = [], obras = [], diarias = [], usuarios = [];
 let selectedMonth = null;
 
 // ─── BOOT ────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const h = new Date().getHours();
-    const greetEl = document.getElementById('dash-greeting');
-    if (greetEl) greetEl.textContent = (h<12?'Bom dia':h<18?'Boa tarde':'Boa noite') + '! 👷';
-    const now = new Date();
-    const relAno = document.getElementById('rel-ano');
-    if (relAno) relAno.value = now.getFullYear();
-    const obraRelAno = document.getElementById('obra-rel-ano');
-    if (obraRelAno) obraRelAno.value = now.getFullYear();
-    const relMes = document.getElementById('rel-mes');
-    if (relMes) relMes.value = now.getMonth();
+window.addEventListener('DOMContentLoaded', () => {
+  // Inicializar valores de data
+  const now = new Date();
+  const h = now.getHours();
+  const greetEl = document.getElementById('dash-greeting');
+  if (greetEl) greetEl.textContent = (h<12?'Bom dia':h<18?'Boa tarde':'Boa noite') + '! 👷';
+  const relAno = document.getElementById('rel-ano');
+  if (relAno) relAno.value = now.getFullYear();
+  const obraRelAno = document.getElementById('obra-rel-ano');
+  if (obraRelAno) obraRelAno.value = now.getFullYear();
+  const relMes = document.getElementById('rel-mes');
+  if (relMes) relMes.value = now.getMonth();
 
-    await new Promise(r => setTimeout(r, 800));
-    document.getElementById('app-loading').style.display = 'none';
+  // Esconder loading após 600ms e mostrar tela correta
+  setTimeout(() => {
+    const loading = document.getElementById('app-loading');
+    if (loading) loading.style.display = 'none';
 
     const saved = sessionStorage.getItem('arr_user');
     if (saved) {
-      currentUser = JSON.parse(saved);
-      showApp();
-    } else {
-      const lastLogin = localStorage.getItem('arr_last_login');
-      if (lastLogin) {
-        const loginField = document.getElementById('login-user');
-        if (loginField) {
-          loginField.value = lastLogin;
-          setTimeout(() => document.getElementById('login-pass')?.focus(), 100);
-        }
+      try {
+        currentUser = JSON.parse(saved);
+        showApp();
+      } catch(e) {
+        sessionStorage.removeItem('arr_user');
+        _mostrarLogin();
       }
-      showLogin();
+    } else {
+      _mostrarLogin();
     }
-  } catch(err) {
-    console.error('Boot error:', err);
-    document.getElementById('app-loading').style.display = 'none';
-    showLogin();
-  }
+  }, 600);
 });
+
+function _mostrarLogin() {
+  const lastLogin = localStorage.getItem('arr_last_login');
+  if (lastLogin) {
+    const loginField = document.getElementById('login-user');
+    if (loginField) {
+      loginField.value = lastLogin;
+      setTimeout(() => { const p = document.getElementById('login-pass'); if(p) p.focus(); }, 100);
+    }
+  }
+  showLogin();
+}
 
 // ─── LOGIN ───────────────────────────────────
 function showLogin() { document.getElementById('login-screen').style.display = 'flex'; }
@@ -785,6 +792,7 @@ async function doLogin() {
   const errEl = document.getElementById('login-error');
   if (!login || !senha) { errEl.style.display = 'block'; errEl.textContent = 'Preencha usuário e senha.'; return; }
 
+  if (!sb) { errEl.style.display = 'block'; errEl.textContent = 'Erro de conexão. Tente novamente.'; return; }
   const { data, error } = await sb.from('usuarios').select('*').eq('login', login).eq('status', 'ativo').single();
   if (error || !data) { errEl.style.display = 'block'; errEl.textContent = 'Usuário não encontrado ou inativo.'; return; }
 
@@ -830,26 +838,34 @@ function showApp() {
 
 // ─── DATA ────────────────────────────────────
 async function loadAll() {
-  await Promise.all([fetchColabs(), fetchObras(), fetchDiarias(), fetchUsuarios()]);
+  try {
+    await Promise.race([
+      Promise.all([fetchColabs(), fetchObras(), fetchDiarias(), fetchUsuarios()]),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
+    ]);
+  } catch(e) {
+    console.error('loadAll error:', e);
+    showToast('⚠️ Erro ao carregar dados. Verifique a conexão.');
+  }
   renderDashboard();
   populateUserFilters();
 }
 
 async function fetchColabs() {
-  const { data } = await sb.from('colaboradores').select('*').order('nome');
-  colabs = data || [];
+  if (!sb) return;
+  try { const { data } = await sb.from('colaboradores').select('*').order('nome'); colabs = data || []; } catch(e) { console.error('fetchColabs:', e); }
 }
 async function fetchObras() {
-  const { data } = await sb.from('obras').select('*').order('created_at', { ascending: false });
-  obras = data || [];
+  if (!sb) return;
+  try { const { data } = await sb.from('obras').select('*').order('created_at', { ascending: false }); obras = data || []; } catch(e) { console.error('fetchObras:', e); }
 }
 async function fetchDiarias() {
-  const { data } = await sb.from('diarias').select('*').order('data', { ascending: false });
-  diarias = data || [];
+  if (!sb) return;
+  try { const { data } = await sb.from('diarias').select('*').order('data', { ascending: false }); diarias = data || []; } catch(e) { console.error('fetchDiarias:', e); }
 }
 async function fetchUsuarios() {
-  const { data } = await sb.from('usuarios').select('id,nome,login,perfil,status').order('nome');
-  usuarios = data || [];
+  if (!sb) return;
+  try { const { data } = await sb.from('usuarios').select('id,nome,login,perfil,status').order('nome'); usuarios = data || []; } catch(e) { console.error('fetchUsuarios:', e); }
 }
 
 // ─── FILTROS DE USUÁRIO ───────────────────────
@@ -1358,7 +1374,11 @@ async function marcarPago(id) {
 const _relPeriodo = {};
 
 async function loadRelatorio() {
-  const mes = parseInt(v('rel-mes')), ano = parseInt(document.getElementById('rel-ano').value);
+  const now = new Date();
+  const mesEl = document.getElementById('rel-mes');
+  const anoEl = document.getElementById('rel-ano');
+  const mes = mesEl ? parseInt(mesEl.value) : now.getMonth();
+  const ano = anoEl && anoEl.value ? parseInt(anoEl.value) : now.getFullYear();
   const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   await fetchDiarias();
   let diariasFiltradas = getFilteredDiarias('rel-filter-user');
@@ -1776,7 +1796,15 @@ function navigate(page) {
   if(page==='resumo-obra') loadResumoObra();
   if(page==='colaboradores') loadColabs();
   if(page==='diarias') loadDiarias();
-  if(page==='relatorio') loadRelatorio();
+  if(page==='relatorio') {
+    // garantir que mês e ano estejam setados
+    const now = new Date();
+    const relMes = document.getElementById('rel-mes');
+    const relAno = document.getElementById('rel-ano');
+    if (relMes && !relMes.value) relMes.value = now.getMonth();
+    if (relAno && !relAno.value) relAno.value = now.getFullYear();
+    setTimeout(() => loadRelatorio(), 50);
+  }
   if(page==='usuarios') loadUsuarios();
 }
 
